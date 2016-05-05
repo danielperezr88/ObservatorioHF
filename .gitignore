@@ -32,6 +32,7 @@ searchs/pickled_algos/*
 #################
 
 *.pid
+addme.php
 
 # Utility Folders #
 ###################
