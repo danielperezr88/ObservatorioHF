@@ -1,0 +1,141 @@
+/* @import url(http://fonts.googleapis.com/css?family=Capriola); */
+.cssmenu,
+.cssmenu ul,
+.cssmenu ul li,
+.cssmenu ul li a {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+  line-height: 1;
+  display: block;
+  position: relative;
+  font-family: Arial, Hevetica;
+}
+.cssmenu {
+  width: auto;
+  *height: 59px;
+  padding-bottom: 4px;
+}
+.cssmenu.align-right {
+  float: right;
+}
+.cssmenu.align-right ul li {
+  float: right;
+  margin-right: 0;
+  margin-left: 4px;
+}
+.cssmenu.align-right ul li:first-child,
+.cssmenu.align-right ul li:first-child > a {
+  border-bottom-right-radius: 3px;
+}
+.cssmenu .bg-one,
+.cssmenu .bg-two,
+.cssmenu .bg-three,
+.cssmenu .bg-four {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 3px;
+}
+/* .cssmenu .bg-one {
+  height: 10px;
+  background: #0f71ba;
+} */
+.cssmenu .bg-two {
+  height: 39px;
+  z-index: 2;
+}
+/* .cssmenu .bg-three {
+  bottom: 4px;
+  height: 55px;
+  z-index: 3;
+  background: ##f2f2f2;
+ /*  background: -moz-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #777777), color-stop(100%, #222222));
+  background: -webkit-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -o-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -ms-linear-gradient(top, #777777 0%, #222222 100%);
+  background: linear-gradient(to bottom, #777777 0%, #222222 100%); */
+} */
+.cssmenu .bg-four {
+  bottom: 4px;
+  height: 55px;
+  z-index: 4;
+}
+.cssmenu ul {
+  color: #;
+  height: 59px;
+}
+.cssmenu ul li {
+  float: left;
+  margin-right: 4px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  z-index: 5;
+}
+.cssmenu ul li a,
+.cssmenu ul li.notactive {
+  padding: 15px 15px 15px 15px;
+  margin-bottom: 4px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  color: #000000;
+  font-size: 14px;
+  text-decoration: none;
+  
+}
+/* .cssmenu ul li.user {
+  background-image: url(images/icons/icons-uni-white.png);
+  background-repeat: no-repeat;
+  background-position: 0 -1633px;
+      padding-top: 0px;
+} */
+/* .cssmenu ul.user {
+  display: block;
+  line-height: 19px;
+  list-style-type: none;
+  padding-top: 25px;
+  height: 45px;
+} */
+/* .cssmenu ul li:first-child,
+.cssmenu ul li:first-child > a {
+  border-bottom-left-radius: 3px;
+} */
+
+/* .cssmenu ul li:hover:not(.notactive), */
+/* .cssmenu ul li.active:not(.notactive) {
+  background: #0f71ba;
+  background: -moz-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3fa4f0), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #3fa4f0 0%, #0f71ba 100%);
+} */
+
+/* MENU ACTIVO, FUENTES EN BLANCO*/
+.cssmenu ul li a:hover,
+.cssmenu ul li.active > a {
+  /* background: #D6DADC; */
+/*   background: -moz-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3fa4f0), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #3fa4f0 0%, #0f71ba 100%); */
+  color: #0F71BA;
+  /* font-weight: bold; */
+}
+
+/* .cssmenu ul li.main > a {
+  background: #0f71ba;
+  background: -moz-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #0fd4ff), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #0fd4ff 0%, #0f71ba 100%);
+  color: #ffffff;
+} */

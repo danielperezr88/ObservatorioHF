@@ -1,0 +1,554 @@
+/* @import url(http://fonts.googleapis.com/css?family=Capriola); */
+
+body { margin:0;}
+
+.cssmenu,
+.cssmenu ul,
+.cssmenu ul li,
+.cssmenu ul li a {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+  line-height: 1;
+  display: block;
+  position: relative;
+  font-family: arial,sans-serif;
+}
+.cssmenu {
+  width: auto;
+  *height: 30px;
+  *padding-bottom: 4px;
+}
+.cssmenu.align-right {
+  float: right;
+}
+.cssmenu.align-right ul li {
+  float: right;
+  margin-right: 0;
+  margin-left: 4px;
+}
+.cssmenu.align-right ul li:first-child,
+.cssmenu.align-right ul li:first-child > a {
+  border-bottom-right-radius: 3px;
+}
+.cssmenu .bg-one,
+.cssmenu .bg-two,
+.cssmenu .bg-three,
+.cssmenu .bg-four {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+.cssmenu .bg-one {
+  height: 10px;
+  background: #0f71ba;
+}
+.cssmenu .bg-two {
+  height: 59px;
+  z-index: 2;
+}
+.cssmenu .bg-three {
+  bottom: 4px;
+  height: 55px;
+  z-index: 3;
+  background: ##f2f2f2;
+/*   background: -moz-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #777777), color-stop(100%, #222222));
+  background: -webkit-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -o-linear-gradient(top, #777777 0%, #222222 100%);
+  background: -ms-linear-gradient(top, #777777 0%, #222222 100%);
+  background: linear-gradient(to bottom, #777777 0%, #222222 100%); */
+}
+.cssmenu .bg-four {
+  bottom: 4px;
+  height: 55px;
+  z-index: 4;
+}
+.cssmenu ul {
+  color: #eeeeee;
+  height: 30px;
+}
+.cssmenu ul li {
+  float: left;
+  margin-right: 4px;
+  *border-top-left-radius: 3px;
+  *border-top-right-radius: 3px;
+  z-index: 5;
+}
+.cssmenu ul li a,
+.cssmenu ul li.notactive {
+  padding: 9px 20px 5px 20px;
+  margin-bottom: 4px;
+  *border-top-left-radius: 3px;
+  *border-top-right-radius: 3px;
+  color: #eeeeee;
+  font-size: 15px;
+  text-decoration: none;
+  
+}
+.cssmenu ul li.user {
+  background-image: url(images/icons/icons-uni-white.png);
+  background-repeat: no-repeat;
+  background-position: 0 -1633px;
+      padding-top: 0px;
+}
+.cssmenu ul.user {
+  display: block;
+  line-height: 19px;
+  list-style-type: none;
+  padding-top: 25px;
+  height: 45px;
+}
+.cssmenu ul li:first-child,
+.cssmenu ul li:first-child > a {
+  border-bottom-left-radius: 3px;
+}
+
+/*Cambios Dani Menú*/
+/*.cssmenu ul li:hover:not(.notactive),
+.cssmenu ul li.active:not(.notactive) {
+  background: #0f71ba;
+  background: -moz-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3fa4f0), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #3fa4f0 0%, #0f71ba 100%);
+}*/
+.cssmenu ul{
+  background: #0f71ba;
+  background: -moz-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3fa4f0), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #3fa4f0 0%, #0f71ba 100%);
+}
+/*Fin Cambios Dani Menú*/
+
+.cssmenu ul li a:hover,
+.cssmenu ul li.active > a {
+  *background: #0f71ba;
+  *background: -moz-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  *background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3fa4f0), color-stop(100%, #0f71ba));
+  *background: -webkit-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  *background: -o-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  *background: -ms-linear-gradient(top, #3fa4f0 0%, #0f71ba 100%);
+  *background: linear-gradient(to bottom, #3fa4f0 0%, #0f71ba 100%);
+  color: #ffffff;
+}
+
+.cssmenu ul li.main > a {
+  background: #0f71ba;
+  background: -moz-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #0fd4ff), color-stop(100%, #0f71ba));
+  background: -webkit-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -o-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: -ms-linear-gradient(top, #0fd4ff 0%, #0f71ba 100%);
+  background: linear-gradient(to bottom, #0fd4ff 0%, #0f71ba 100%);
+  color: #ffffff;
+}
+
+/*Inicio Cambios Dani*/
+
+	/* - Estilos Header */
+	body {
+		background-color: #f2f2f2 !important;
+		font:"Arial", "Helvetica";
+	}
+	html, body, #map {
+		height: 100%;
+		width: 100%;
+		background-color: ##f2f2f2;
+	}
+	/*BOX STYLE  NO solo del submenu TAMBIEN del contenido central*/
+	.maincontent {
+		margin : 0px;
+		background-color: ##f2f2f2;
+		color: black;
+		width:100%;
+		*padding-top: 40px;
+	}
+	.maincontent a 
+	{
+		color: black;
+	}
+	.mytablecontainer #mytable {
+		font-family:"Arial", "Helvetica";
+		font-size:12px;
+		min-width:280px;
+		text-align:left;
+		border-collapse:collapse;
+		width:100%;
+		margin-bottom:25px; }
+	#mytable th {font-size:14px;font-weight:normal;background:#ccc;border-top:4px solid #ddd;border-bottom:1px solid #fff;color:#666666;padding:10px;}
+	#mytable td {background:#f9f9f9;border-bottom:1px solid #fff;color:#999;padding:8px 10px;}
+	#mytable tr:hover td {background:#eee;color:#444;}
+
+	/* - Filtros Horarios */
+	
+
+	/* - Hover Menú */
+	#cssmenu > ul > li:hover, #cssmenu > ul > li > a:hover,
+	#cssmenu > ul > li.active, #cssmenu > ul > li.active > a {
+		background: rgba(255,255,255,0.3);
+	}
+	
+	/* - Content Tabs */
+	#content #tabs {
+		padding: 0;
+	}
+	
+	#content #tabs div:not(.picker-date,.picker-category,.picker-search,.picker-type){
+		padding: 5px;
+	}
+		
+	#content #tabs div.picker-date,
+	#content #tabs div.picker-category,
+	#content #tabs div.picker-search,
+	#content #tabs div.picker-type {
+		padding: 0 5px 0 5px;
+	}
+		
+	#content #tabs ul.ui-widget-header {
+		border: none;
+		background: none;
+	}
+	
+	#content #tabs div.ui-tabs-panel {
+		border: solid #aaaaaa;
+		border-width: 1px 1px 0 1px;
+		border-radius: 3px 3px 0 0;
+		background: white;
+	}
+	
+	/*#content #tabs div.picker-date,
+	#content #tabs div.picker-category,
+	#content #tabs div.well,*/
+	
+	#content #tabs div.picker-search,
+	#content #tabs div.picker-type {
+		border: none;
+		background: white;
+	}
+
+	#content #tabs div#tabcontent {
+		border: solid #aaaaaa;
+		border-width: 0 1px 1px 1px;
+		border-radius: 0 0 3px 3px;
+		background: white;
+	}
+	
+	#content #tabs li,
+	#content #tabs li > a,
+	#search_str li,
+	#search_str li > a {
+		color: #0f71ba;
+	}
+
+	#content #tabs li.active {
+		font-weight: bold;
+	}
+	
+	/* - Charts */
+	#chartdiv {
+		width		: 100%;
+		height		: 500px;
+		font-size	: 11px;
+	}
+	
+	/* - Dashboard */
+	div[class|=dashboard] table {
+		border-spacing: 15px 5px;
+		border-collapse: separate;
+	}
+	
+	div[class|=dashboard] .btn {
+		font-size: 0.75em;
+		padding: 0 6px;
+		width: 100%;
+	}
+	
+	div[class|=dashboard].well {
+		min-height: 20px;
+		padding: 20px;
+		margin: 10px;
+		color: black;
+		background-color: #f5f5f5;
+		border: 1px solid #e3e3e3;
+		-webkit-border-radius: 4px;
+		-moz-border-radius: 4px;
+		border-radius: 4px;
+		-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+		-moz-box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+		box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+		color: black;
+	}
+	
+	div[class|=dashboard].well a {
+		color: blue;
+	}
+	
+	div[class|=dashboard] ul.home {
+		font-weight: 600;
+	}
+	
+	div[class|=dashboard] ul.tagit {
+		margin: 0px;
+	}
+	
+	div.dashboard-manage-twitter-tokens td {
+		max-width: 150px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	div.dashboard-manage-twitter-tokens td:nth-child(-n+4):hover {
+		text-overflow: initial;
+		width: 100%;
+	}
+	
+	/* - Filtros */
+	#minusMonth, #plusMonth, #setDefaults, #submitTemp, #submitSearch {
+		width: 100%;
+		*width: 75px;
+		height: 18px;
+		line-height: 2px;
+		margin-top: 1px;
+	}
+	
+	div#ui-datepicker-div {
+		background: white;
+		border: 1px solid #a2a2a2;
+	}
+	
+	#submitSearch {
+		font-size: 1.1em;
+		margin-top: 3px;
+	}
+	
+	#search_str {
+		-webkit-appearance: textfield;
+		background-color: white;
+		border-image-source: initial;
+		border-image-slice: initial;
+		border-image-width: initial;
+		border-image-outset: initial;
+		border-image-repeat: initial;
+		-webkit-rtl-ordering: logical;
+		-webkit-user-select: text;
+		cursor: auto;
+		border-width: 2px;
+		border-style: inset;
+		border-color: initial;
+		text-rendering: auto;
+		letter-spacing: normal;
+		word-spacing: normal;
+		text-transform: none;
+		text-indent: 0px;
+		text-shadow: none;
+		display: inline-block;
+		text-align: start;
+		-webkit-writing-mode: horizontal-tb;
+		width: 100%;
+	}
+	
+	#wordsToSearch {
+		border-style: solid;
+		border-color: rgb(169,169,169);
+		border-width: 1px;
+		font-size: 2em;
+		list-style: none;
+	}
+	
+	#wordsToSearch,
+	#search_str {
+		padding: 0;
+		margin: 0;
+	}
+	
+	#wordsToSearch li.tagit-new,
+	#search_str li.tagit-new{
+		margin: 0;
+		padding: 0.15em;
+		font-size: 1.5em;
+		line-height: 5px;
+	}
+
+	#wordsToSearch span.tagit-label,
+	#search_str span.tagit-label	{
+		font-size: 0.8em;
+		line-height: 15px;
+		vertical-align: text-top;
+	}
+
+	#wordsToSearch li.tagit-choice,
+	#search_str li.tagit-choice {
+		padding-top: 0px;
+		padding-bottom: 1px;
+		padding-left: 3px;
+		margin: 1px;
+		height: 24px;
+		line-height: 14px;
+		display: inline-block;
+	}
+
+	#wordsToSearch .tagit-close,
+	#search_str .tagit-close {
+		margin-top: -9px;
+	}
+	
+	#wordsToSearch span.text-icon {
+		display: none;
+	}
+
+	#wordsToSearch span.ui-icon.ui-icon-close {
+		display: inline-block;
+		margin-top: 3px;
+	}
+	
+	input.ui-widget-content.ui-autocomplete-input {
+		width: 100%;
+	}
+
+	li.tagit-new {
+		width: 100%;
+	}
+	
+	.picker-date label,
+	.picker-category label,
+	.picker-search label,
+	.picker-active label,
+	.picker-type label {
+		font-size: 0.7em;
+	}
+	
+	.picker-date,
+	.picker-category,
+	.picker-search,
+	.picker-active,
+	.picker-type {
+		height: 24px;
+	}
+	
+	.picker-wsearcher label {
+		font-size: 1.4286em;
+	}
+	
+	div.ui-tabs-panel {
+		border-width: 0 1px 0 1px;
+		border-radius: 0;
+	}
+
+	div#filter-container {
+		border: solid #aaaaaa;
+		border-width: 1px;
+		border-radius: 3px 3px 0 0;
+		background: white;
+		padding-top: 9px;
+		padding-bottom: 9px;
+		border-bottom: 0px dashed #aaaaaa;
+	}
+	
+	div#filter-container label {
+		line-height: 23px;
+		text-align: right;
+		padding-right: 10px;
+		padding-left: 5px;
+		margin-left: -15px;
+	}
+	
+	div#filter-container div.row {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	
+	div#filter-container label[for=tohour], div#filter-container label[for=todate] {
+		margin: 0;
+		width: 1.1em;
+	}
+	
+	.word-searcher label {
+		font-size: 1.4286em;
+	}
+	
+	div.picker-category tr > td:nth-child(2),
+	div.picker-search tr > td:nth-child(2),
+	div.picker-type tr > td:nth-child(2) {
+		padding-left: 30px;
+	}
+	
+	div[class|=picker] {
+		background: none;
+		border: none;
+		padding: 0;
+	}
+	
+	div[class|=picker].last-child {
+		margin-bottom: 30px;
+	}
+	
+	div[class|=picker] > div.form-group > div.temp-btn {
+		padding-left: 7px;
+		padding-right: 7px;
+		margin: 0 0 7px 0;
+	}
+	
+	div[class|=picker] div[class|=col] {
+		padding-left: 0;
+		padding-right: 0;
+		margin: 0;
+	}
+	
+	div[class|=picker] input:not(.btn) {
+		padding: 1px;
+		width: 100%;
+		text-align: left;
+	}
+
+	div[class|=picker] select {
+		padding: 1px;
+		width: 100%;
+		text-align: left;
+	}
+	
+	table.word-searcher tr:first-child {
+		margin-top: -1px;
+		display: block;
+	}
+	
+	#preloader {
+		border: 4px solid #aaaaaa;
+		border-radius: 5px;
+		background: rgba(250,250,250,0.8);
+		position: absolute;
+		width: 88px;
+		height: 88px;
+		z-index: 5;
+		top: 50%;
+		left: 50%;
+		transform: translateX(-50%) translateY(-50%);
+	}
+	
+	#preloader img {
+		width: 45px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translateX(-50%) translateY(-50%);
+	}
+	
+	/* - AmCharts */
+	#tabcontent #content div.amcharts-left-div {
+		width: 75px;
+	}
+	
+	.amcharts-compare-item-div {
+		height: 22px !important;
+	}
+	
+/*Fin Cambios Dani*/
