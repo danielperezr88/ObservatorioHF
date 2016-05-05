@@ -267,7 +267,7 @@
 					allVars = allVars + extraVars;
 				}
 			  	var uri = selectedTab + '?' + allVars.substring(1);
-			  	alert(selectedTab);
+			  	//alert(selectedTab);
 
 			  	$('div[class|=picker]').hide();
 <?php		  	foreach($pageContents['tabs'] as $tab)
