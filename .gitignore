@@ -33,6 +33,8 @@ searchs/pickled_algos/*
 
 *.pid
 addme.php
+searchs/input*.py
+!searchs/input.py
 
 # Utility Folders #
 ###################
