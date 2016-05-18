@@ -29,6 +29,11 @@
 					  "library" =>  "tag-it",
 					  "version" =>  "2.0",
 					  "files"   =>  array("jquery.tagit.css")
+					),
+					array(
+					  "library" =>  "daterangepicker",
+					  "version" =>  "2.1.19",
+					  "files"   =>  array("daterangepicker.css")
 					)
 				  )
 				)

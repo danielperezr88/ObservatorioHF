@@ -14,8 +14,8 @@
 		continue; //hacking attempt
 	}
 	
-	$returned = $sql_tools->GetSearchsActive(GetGet("active", 1), GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']));
-	
+	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']),GetGet("active", 1));
+	//error_log(serialize($returned));
 	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
 	
 	$fromdate = GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
@@ -47,6 +47,11 @@
 		  "library" =>  "tag-it",
 		  "version" =>  "2.0",
 		  "files"   =>  array("jquery.tagit.css")
+		),
+		array(
+		  "library" =>  "daterangepicker",
+		  "version" =>  "2.1.19",
+		  "files"   =>  array("daterangepicker.css")
 		)
 	  )
 	));

@@ -188,6 +188,7 @@ if(!class_exists("sql_tools"))
       if ($id != "")
         $query .= " and id = ".$id;
       //print($query);
+	  //error_log($query);
       return self::GetValuesFromQuery($query, true);
     }
     
@@ -272,6 +273,7 @@ if(!class_exists("sql_tools"))
       $whereQuery = " where search_id IN (".$search_ids .")";
       if ($where != "") $whereQuery .= " and ".$where;
       $totalQuery = $query.$whereQuery.$finalQuery;
+	  //error_log($totalQuery);
       $toReturn = self::GetValuesFromQuery($totalQuery);
       return $toReturn;
     }
