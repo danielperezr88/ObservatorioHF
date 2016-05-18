@@ -29,7 +29,8 @@
 		array(
 		  "library" =>  "daterangepicker",
 		  "version" =>  "2.1.19",
-		  "files"   =>  array("daterangepicker.css")
+		  "files"   =>  array("daterangepicker.css"),
+		  "isAsync"	=>	True
 		)
 	  )
 	));

@@ -170,8 +170,15 @@
 						foreach($dep['files'] as $file){
 							if($kinda == "scripts")
 								echo "<script src=\"{$library}/{$file}\"></script>\n";
-							else
-								echo "<link href=\"{$library}/{$file}\" />\n";
+							else{
+								if($dep['isAsync']){
+									echo '<style type="text/css">';
+									require $library.'/'.$file;
+									echo '</style>';
+								}
+								else
+									echo "<link href=\"{$library}/{$file}\" />\n";
+							}
 						}
 				}
 			}
