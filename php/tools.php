@@ -171,7 +171,7 @@
 							if($kinda == "scripts")
 								echo "<script src=\"{$library}/{$file}\"></script>\n";
 							else{
-								if($dep['isAsync']){
+								if(array_key_exists('isAsync', $dep)?$dep['isAsync']:false){
 									echo '<style type="text/css">';
 									require $library.'/'.$file;
 									echo '</style>';
