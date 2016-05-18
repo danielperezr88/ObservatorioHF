@@ -5,6 +5,7 @@
 config*.txt
 */config*.py
 config*.py
+!searchs/configwatcher.py
 
 # Python Cache Folder #
 #######################
