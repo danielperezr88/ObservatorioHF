@@ -120,18 +120,22 @@
         percentHeight: 30,
 		"marginTop": 1,
 		"showCategoryAxis": true,
-		  "valueAxes": [ {
-			"dashLength": 5
-		  } ],
-
-		  "categoryAxis": {
-			"dashLength": 5
-		  },
+		"valueAxes": [ {
+		  "dashLength": 5,
+		  "stackType": "regular"
+		} ],
+		"categoryAxis": {
+		  "dashLength": 5
+		},
         stockGraphs: [ {
           valueField: "volume",
           type: "column",
           showBalloon: false,
-          fillAlphas: 1
+          fillAlphas: 1,
+		  comparable: true,
+          compareGraphType : 'column',
+          compareGraphFillAlphas: 1,
+          clustered: true
         } ],
 
 
@@ -143,8 +147,8 @@
 
     chartScrollbarSettings: {
       graph: "g1",
-    "graphType": "line",
-    "usePeriod": "WW"
+	  //graphType: "line",
+      //usePeriod: "WW"
     },
 
     chartCursorSettings: {
