@@ -141,12 +141,14 @@ def save_pid():
 def find_features(document):
 
     """ Preprocess content """
-    #document = quitar_acentos(re.sub(r'[?|$|.|!|¡|¿|-|,]',r'',document).lower())
+    #document = quitar_acentos(re.sub(r'[?|$|.|!|¡|¿|,|:|;]',r'',document).lower())
+    document = re.sub(r'((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[.\!\/\\w]*))?)',r' ',document).lower()
+    document = re.sub(r'[.|!|¡|¿|,|:|;|_]',r' ',document).lower()
     
     """ Tokenize """
-    words = word_tokenize(document.replace('?','ë').replace('_',' '),language="spanish")
-    #count_vect = CountVectorizer(stop_words=None)
-    #words = count_vect.build_analyzer().__call__(document.replace('?','ë').replace('_',' '))
+    #words = word_tokenize(document.replace('?','ë').replace('_',' '),language="spanish")
+    count_vect = CountVectorizer(stop_words=None)
+    words = count_vect.build_analyzer().__call__(document.replace('?','ë'))
     
     """ Maybe Spell Correct + Rule-Based Pruning """
     corrected = []
@@ -170,7 +172,7 @@ def find_features(document):
         if re.match(r'#.*',each):
             continue
         """ Words containing numbers """
-        if re.match(r'[0-9]',each):
+        if re.match(r'[^0-9]*[0-9]',each):
             continue
 
 
@@ -185,7 +187,7 @@ def find_features(document):
     """ Stop-word Pruning """
     stop_words = set(stopwords.words("spanish"))
     features = [w for w in corrected if w not in stop_words]
-
+    
     """ Filtered features  """
     return features
       
