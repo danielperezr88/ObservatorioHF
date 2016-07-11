@@ -33,23 +33,11 @@ def save_pid():
     except BaseException as e:
         logging.error('Failed to create pid file: '+ str(e))
 
-def get_pids():
-    outputPids = os.popen("tasklist /v /fo csv | findstr /i python ").read()
-    lines = outputPids.split('\n')
-    myList= []
-    for line in lines:
-        if (line != '') :
-            myList.append(line.split(',')[1].replace('"', ''))
-    return myList
-
-def check_pid(pid, pids):
-    return pid in pids
-
-#def check_pid(pid):
-#    output = os.popen("tasklist /v /fo csv | findstr /i python | findstr /i " + pid).read()
-#    if not output:
-#        return False
-#    return True
+def check_pid(pid):
+    output = os.popen("tasklist /v /fo csv | findstr /i python | findstr /i " + pid).read()
+    if not output:
+        return False
+    return True
 
 #    """Check whether pid exists in the current process table.
 #    UNIX only.
@@ -127,8 +115,8 @@ def create_py_files(searchId, searchValues, dirname):
     patterns["keyword_list_filter"] = "keyword_list_filter = ["+ searchValues[0]+"]";
     patterns["consumer_key"] = "consumer_key = \""+ searchValues[2] + "\"";
     patterns["consumer_secret"] = "consumer_secret = \""+ searchValues[3]+ "\"";
-    patterns["access_secret"] = "access_secret = \""+ searchValues[4]+ "\"";
-    patterns["access_token"] = "access_token = \""+ searchValues[5]+ "\"";
+    patterns["access_token"] = "access_token = \""+ searchValues[4]+ "\"";
+    patterns["access_secret"] = "access_secret = \""+ searchValues[5]+ "\"";
     
     replace(configpyfile,patterns)
 
@@ -140,7 +128,7 @@ def launch_py(searchId, searchValues, pythonPath, dirname):
 #    print(filename)
     os.system('start /b "" ' + pythonPath + ' ' + filename + ' /D ' + dirname )
 
-def launch_py_if_stop(searchId, searchValues, pythonPath, dirname, activePids):
+def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
 #    print("launching " + searchId)
     pidfile = os.path.join(dirname, "input" + searchId + ".py.pid")
 #    print( pidfile)
@@ -150,7 +138,7 @@ def launch_py_if_stop(searchId, searchValues, pythonPath, dirname, activePids):
         with open(pidfile, 'r') as f:
             pid_data = f.read()
         f.close()
-        if not check_pid(pid_data, activePids):
+        if not check_pid(pid_data):
             launch_py(searchId, searchValues, pythonPath, dirname)
     else:
         launch_py(searchId, searchValues, pythonPath, dirname)  
@@ -159,7 +147,7 @@ def stop_py(pid):
     os.popen("taskkill /PID " + pid + " /f")
     return True
 
-def stop_py_if_run(searchId, searchStr, pythonPath, dirname, activePids):
+def stop_py_if_run(searchId, searchStr, pythonPath, dirname):
 #    print("Stoping " + searchId)
     pidfile = os.path.join(dirname, "input" + searchId + ".py.pid")
     if os.path.exists(pidfile):
@@ -168,23 +156,23 @@ def stop_py_if_run(searchId, searchStr, pythonPath, dirname, activePids):
         with open(pidfile, 'r') as f:
             pid_data = f.read()
         f.close()
-        if check_pid(pid_data, activePids):
+        if check_pid(pid_data):
             stop_py(pid_data)
         remove(pidfile)
 
-def launch_or_stop(searchId, searchValues, pythonPath, dirname, activePids):
+def launch_or_stop(searchId, searchValues, pythonPath, dirname):
     # Get pid file
     if searchValues[1] == 1: #active
-        launch_py_if_stop(searchId, searchValues, pythonPath, dirname, activePids)
+        launch_py_if_stop(searchId, searchValues, pythonPath, dirname)
     else: # inactive
-        stop_py_if_run(searchId, searchValues[0], pythonPath, dirname, activePids)
+        stop_py_if_run(searchId, searchValues[0], pythonPath, dirname)
         
 
-def keep_processes_alive(pyfiles, pythonPath, dirname, activePids):
+def keep_processes_alive(pyfiles, pythonPath, dirname):
     for searchId in pyfiles:
-        launch_or_stop(str(searchId), pyfiles[searchId], pythonPath, dirname, activePids)
+        launch_or_stop(str(searchId), pyfiles[searchId], pythonPath, dirname)
 
-def keep_analizer_alive(pythonPath, dirname, activePids):
+def keep_analizer_alive(pythonPath, dirname):
     analizer_name = "analisys.py"
     filename = os.path.join(dirname, analizer_name)
     pidfile = os.path.join(dirname, analizer_name + ".pid")
@@ -194,7 +182,7 @@ def keep_analizer_alive(pythonPath, dirname, activePids):
         with open(pidfile, 'r') as f:
             pid_data = f.read()
         f.close()
-        if not check_pid(pid_data,activePids):
+        if not check_pid(pid_data):
             os.system('start /b "" ' + pythonPath + ' ' + filename)
     else:
         os.system('start /b "" ' + pythonPath + ' ' + filename)
@@ -265,9 +253,8 @@ def main():
     while (not end):
         pyfiles = get_files_to_watch(dirname)
 #        print(pyfiles)
-        activePids = get_pids()
-        keep_processes_alive(pyfiles, pythonPath, dirname,activePids)
-        keep_analizer_alive(pythonPath, dirname,activePids)
+        keep_processes_alive(pyfiles, pythonPath, dirname)
+        keep_analizer_alive(pythonPath, dirname)
         move_files(dirname)
         time.sleep(3) # delays for 3 seconds
 #    keep_processes_alive(pyfiles, pythonPath)
