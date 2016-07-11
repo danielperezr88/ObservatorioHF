@@ -284,6 +284,10 @@ def analizeLine(searchId, line, classifier, word_features):
     if line not in ['\n', '\r\n']:
         try:
             tweet = json.loads(line)
+            
+            if(tweet['lang']!='es'):
+                return True
+                
             feats = find_features(tweet['text'])
             sentiment, confidence = retrieveClassAndConfidence(classifier,feats)
             """Save it into db."""

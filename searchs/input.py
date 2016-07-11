@@ -122,7 +122,7 @@ def main():
         auth = OAuthHandler(configinput.consumer_key, configinput.consumer_secret)
         auth.set_access_token(configinput.access_token, configinput.access_secret)
         twitter_stream = Stream(auth, MyListener(os.path.join(dirname, configinput.directory), os.path.join(dirname, configinput.to_dir), basename))   # el segundo argumento es el nombre del archibvo json
-        twitter_stream.filter(track=configinput.keyword_list_filter)
+        twitter_stream.filter(track=configinput.keyword_list_filter,languages=['es'])
     except BaseException as e:
         logging.error('Failed to execute twitter api: ' + str(e))    
     
