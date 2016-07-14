@@ -173,7 +173,7 @@ def keep_processes_alive(pyfiles, pythonPath, dirname):
         launch_or_stop(str(searchId), pyfiles[searchId], pythonPath, dirname)
 
 def keep_analizer_alive(pythonPath, dirname):
-    analizer_name = "analisys.py"
+    analizer_name = "analysis.py"
     filename = os.path.join(dirname, analizer_name)
     pidfile = os.path.join(dirname, analizer_name + ".pid")
     if os.path.exists(pidfile):

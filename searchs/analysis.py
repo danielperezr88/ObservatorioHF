@@ -30,7 +30,7 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 
 import spanish_corrector as sc
-import configanalisys
+import configanalysis
 
 """                                 DECORATORS                              """
 
@@ -242,8 +242,8 @@ def uploadData(searchId, tweet, sentiment, confidence):
         elif (sentiment == "neg" ):
             sentimentVal = -1
 
-        conn = mysql.connector.connect(user=configanalisys.dbuser, password=configanalisys.dbpassword,
-                                       host=configanalisys.dbhost, database=configanalisys.dbdatabase)
+        conn = mysql.connector.connect(user=configanalysis.dbuser, password=configanalysis.dbpassword,
+                                       host=configanalysis.dbhost, database=configanalysis.dbdatabase)
 
         retweetedFrom = ''
         retweetedLat = ''
@@ -326,8 +326,10 @@ def evaluateFiles(classifier, word_features, inputDir, outputDir):
 def main():
     """ Create/Retrieve working dirs """
     dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    inputDir = os.path.join(dirname, configanalisys.inputDir)
-    outputDir = os.path.join(dirname, configanalisys.outputDir)
+    #inputDir = os.path.join(dirname, configanalysis.inputDir)
+    inputDir = os.path.join(dirname, "analysis")
+    #outputDir = os.path.join(dirname, configanalysis.outputDir)
+    outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
     
     """ Logging configuration """
