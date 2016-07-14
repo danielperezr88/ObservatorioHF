@@ -1,9 +1,0 @@
-directory = "watcher"
-#dbtable = "searchs"
-dbuser = "root"
-dbpassword = ""
-dbhost = "localhost"
-dbdatabase = "sentiment"
-move_files_time_s = "60"
-move_files_size_kb = "10"
-from_to_dirs = ['input', 'analisys']

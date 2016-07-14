@@ -220,7 +220,8 @@ def move_from_to(dir_from, dir_to):
 def move_files(dirname):
     counter = 0
     dir_from = ''
-    for dir_files in configwatcher.from_to_dirs:
+    #for dir_files in configwatcher.from_to_dirs:
+    for dir_files in ['input','analysis']:
         if counter % 2 == 0:
             dir_from = os.path.join(dirname, dir_files)
         else:
@@ -234,7 +235,8 @@ def main():
     basename = os.path.basename(os.path.realpath(__file__))
 
     """Start log."""
-    outputDir = os.path.join(dirname, configwatcher.directory)
+    #outputDir = os.path.join(dirname, configwatcher.directory)
+    outputDir = os.path.join(dirname, "watcher")
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     logfilename = os.path.join(outputDir,basename) + ".log"

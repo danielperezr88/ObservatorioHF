@@ -108,7 +108,12 @@ def main():
     name_noextension = os.path.splitext(basename)[0]
     """Start log."""
     configinput = __import__("config" + name_noextension)
-    outputDir = os.path.join(dirname, configinput.directory)
+    
+    #toDir = os.path.join(dirname, configinput.to_dir)
+    toDir = os.path.join(dirname, "analysis")
+    
+    #outputDir = os.path.join(dirname, configinput.directory)
+    outputDir = os.path.join(dirname, "input")
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     logfilename = os.path.join(outputDir,basename) + ".log"
@@ -121,7 +126,7 @@ def main():
     try:
         auth = OAuthHandler(configinput.consumer_key, configinput.consumer_secret)
         auth.set_access_token(configinput.access_token, configinput.access_secret)
-        twitter_stream = Stream(auth, MyListener(os.path.join(dirname, configinput.directory), os.path.join(dirname, configinput.to_dir), basename))   # el segundo argumento es el nombre del archibvo json
+        twitter_stream = Stream(auth, MyListener(outputDir, toDir, basename))   # el segundo argumento es el nombre del archibvo json
         twitter_stream.filter(track=configinput.keyword_list_filter,languages=['es'])
     except BaseException as e:
         logging.error('Failed to execute twitter api: ' + str(e))    
