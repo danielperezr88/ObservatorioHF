@@ -101,7 +101,7 @@ configinput = {
     "access_secret" : "",
     "access_token" : ""
 }
-fp = open('configinput.py','w')
+fp = open(os.path.join(WDIR,PYDIR,'configinput.py'),'w')
 for (key, value) in configinput.items():
     fp.write("%s = %s\n" % (key, str([value]).replace('\n', '\n\t')[1:-1]))
 fp.write("\n")
@@ -110,4 +110,8 @@ fp.close()
 ### Set correct ownership for Apache2 to be able to run our webservice
 uid = pwd.getpwnam("www-data").pw_uid
 gid = grp.getgrnam("www-data").gr_gid
-os.chown(os.path.join(WDIR,'*'),uid,gid)
+for root, dirs, files in os.walk(WDIR):  
+    for momo in dirs:  
+        os.chown(os.path.join(root, momo), uid, gid)
+    for momo in files:
+        os.chown(os.path.join(root, momo), uid, gid)
