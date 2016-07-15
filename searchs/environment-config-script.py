@@ -21,9 +21,9 @@ PYDIR = 'searchs'
 PICKLEDIR = 'pickled_algos'
 
 
-def maybeCreateDirs(dirnames):
+def maybeCreateDirs(dirnames, base='.'):
     if not isinstance(dirnames,list): dirnames = [dirnames]
-    for dirname in [dn for dn in dirnames if dn != '']:
+    for dirname in [os.path.join(base,dn) for dn in dirnames if dn != '']:
         if not os.path.exists(dirname): os.makedirs(dirname)
 
 def replace(file_path, patterns):
@@ -53,7 +53,12 @@ def replace(file_path, patterns):
 
 
 ### Create needed directories
-maybeCreateDirs(['input','watcher','analysis','analized',os.path.join('analized','error'),'pickled_algos'])
+maybeCreateDirs([
+        'input','watcher','analysis','analized',
+        os.path.join('analized','error'),'pickled_algos'
+    ],
+    os.path.join(WDIR,PYDIR)
+)
 
 
 ### Download pickles and config file from pickle bucket
