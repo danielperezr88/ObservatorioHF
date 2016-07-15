@@ -77,29 +77,6 @@ for b in blobs:
 import observatoriohf
     
 
-### Generate configanalysis.py & configwatcher.py by prompting the user
-"""
-configs = {
-    'Database Host (IP or hostname)[required]' : { 'required' : True, 'name' : 'dbhost', 'value' : ''},
-    'Database User [required]' : { 'required' : True, 'name' : 'dbuser', 'value' : ''},
-    'Database User Password (void for none)' : { 'required' : False, 'name' : 'dbpassword', 'value' : ''},
-    'Table Name [required]' : { 'required' : True, 'name' : 'dbdatabase', 'value' : ''},
-}
-
-print("Welcome to the ObservatorioHF configuration assistant")
-print("")
-print("Please, fill the following:")
-print("")
-
-res = []
-for cfname, req in [(n,v['required']) for n,v in configs.items()]:
-    r = raw_input(cfname+': ')
-    while(len(r) == 0 and req):
-        r = raw_input(cfname+': ')
-    configs[cfname]['value'] = r
-    print("")
-"""
-
 cfgs = ['dbhost','dbuser','dbpassword','dbdatabase']
 cfgfiles = ['configanalysis.py','configwatcher.py']
 for f in cfgfiles:
