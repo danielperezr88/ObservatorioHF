@@ -101,9 +101,12 @@ for cfname, req in [(n,v['required']) for n,v in configs.items()]:
 """
 
 cfgs = ['dbhost','dbuser','dbpassword','dbdatabase']
-
-replace('configanalysis.py',{n:getattr(observatoriohf,n) for n in cfgs})
-replace('configwatcher.py',{n:getattr(observatoriohf,n) for n in cfgs})
+cfgfiles = ['configanalysis.py','configwatcher.py']
+for f in cfgfiles:
+    replace(
+        os.path.join(WDIR,PYDIR,f),
+        {n:getattr(observatoriohf,n) for n in cfgs}
+    )
 
 ### Generate configinput.py (input configuration template)
 configinput = {
