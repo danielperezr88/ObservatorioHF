@@ -6,13 +6,14 @@ Created on Tue Jul 12 11:55:17 2016
 """
 
 import os
+import pwd
+import grp
 import re
 import shutil
 from tempfile import mkstemp
 
 from google.protobuf import timestamp_pb2
 from gcloud import storage
-
 
 PICKLE_BUCKET = 'pickles-python'
 CONFIG_BUCKET = 'configs-hf'
@@ -77,6 +78,7 @@ for b in blobs:
 import observatoriohf
     
 
+### Generate configanalysis.py & configwatcher.py from bucketed config file
 cfgs = ['dbhost','dbuser','dbpassword','dbdatabase']
 cfgfiles = ['configanalysis.py','configwatcher.py']
 for f in cfgfiles:
@@ -84,6 +86,12 @@ for f in cfgfiles:
         os.path.join(WDIR,PYDIR,f),
         {n:getattr(observatoriohf,n) for n in cfgs}
     )
+
+### Copy configanalysis.py into ../config.py
+shutil.copyfile(
+    os.path.join(WDIR,PYDIR,'configanalysis.py'),
+    os.path.join(WDIR,'config.py')
+)
 
 ### Generate configinput.py (input configuration template)
 configinput = {
@@ -98,3 +106,8 @@ for (key, value) in configinput.items():
     fp.write("%s = %s\n" % (key, str([value]).replace('\n', '\n\t')[1:-1]))
 fp.write("\n")
 fp.close()
+
+### Set correct ownership for Apache2 to be able to run our webservice
+uid = pwd.getpwnam("www-data").pw_uid
+gid = grp.getgrnam("www-data").gr_gid
+os.chown(os.path.join(WDIR,'*'),uid,gid)
