@@ -16,23 +16,10 @@ from gcloud import storage
 
 PICKLE_BUCKET = 'pickles-python'
 CONFIG_BUCKET = 'configs-hf'
-DEST_DIR = 'pickled_algos'
+WDIR = '/var/www/html'
+PYDIR = 'searchs'
+PICKLEDIR = 'pickled_algos'
 
-
-### Download pickles and config file from pickle bucket
-client = storage.Client()
-cblob = client.get_bucket(CONFIG_BUCKET).get_blob('observatoriohf.py')
-fp = open('observatoriohf.py','w')
-cblob.download_to_file(fp)
-fp.close()
-blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
-for b in blobs:
-    filename = re.sub(r'(?:([^\/]*)[\/$]){2}.*',r'\1',b.id)
-    fp = open(os.path.join(DEST_DIR,filename),'w')
-    b.download_to_file(fp)
-    fp.close()
-
-import observatoriohf
 
 def maybeCreateDirs(dirnames):
     if not isinstance(dirnames,list): dirnames = [dirnames]
@@ -67,6 +54,23 @@ def replace(file_path, patterns):
 
 ### Create needed directories
 maybeCreateDirs(['input','watcher','analysis','analized',os.path.join('analized','error'),'pickled_algos'])
+
+
+### Download pickles and config file from pickle bucket
+client = storage.Client()
+cblob = client.get_bucket(CONFIG_BUCKET).get_blob('observatoriohf.py')
+fp = open(os.path.join(WDIR,PYDIR,'observatoriohf.py'),'w')
+cblob.download_to_file(fp)
+fp.close()
+blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
+for b in blobs:
+    filename = re.sub(r'(?:([^\/]*)[\/$]){2}.*',r'\1',b.id)
+    fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'w')
+    b.download_to_file(fp)
+    fp.close()
+
+import observatoriohf
+    
 
 ### Generate configanalysis.py & configwatcher.py by prompting the user
 """
