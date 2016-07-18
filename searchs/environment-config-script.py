@@ -71,7 +71,7 @@ fp.close()
 blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
 for b in blobs:
     filename = re.sub(r'(?:([^\/]*)[\/$]){2}.*',r'\1',b.id)
-    fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'w')
+    fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'wb')
     b.download_to_file(fp)
     fp.close()
 
@@ -101,7 +101,7 @@ configinput = {
     "access_secret" : "",
     "access_token" : ""
 }
-fp = open(os.path.join(WDIR,PYDIR,'configinput.py'),'w')
+fp = open(os.path.join(WDIR,PYDIR,'configinput.py'),'wb')
 for (key, value) in configinput.items():
     fp.write("%s = %s\n" % (key, str([value]).replace('\n', '\n\t')[1:-1]))
 fp.write("\n")
