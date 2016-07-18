@@ -65,7 +65,7 @@ maybeCreateDirs([
 ### Download pickles and config file from pickle bucket
 client = storage.Client()
 cblob = client.get_bucket(CONFIG_BUCKET).get_blob('observatoriohf.py')
-fp = open(os.path.join(WDIR,PYDIR,'observatoriohf.py'),'w')
+fp = open(os.path.join(WDIR,PYDIR,'observatoriohf.py'),'wb')
 cblob.download_to_file(fp)
 fp.close()
 blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
