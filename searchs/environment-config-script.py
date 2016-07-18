@@ -103,7 +103,7 @@ configinput = {
 }
 fp = open(os.path.join(WDIR,PYDIR,'configinput.py'),'wb')
 for (key, value) in configinput.items():
-    fp.write("%s = %s\n" % (key, str([value]).replace('\n', '\n\t')[1:-1]))
+    fp.write(bytes("%s = %s\n" % (key, str([value]).replace('\n', '\n\t')[1:-1])))
 fp.write("\n")
 fp.close()
 
