@@ -130,14 +130,16 @@ def create_py_files(searchId, searchValues, dirname):
     configpyfile = os.path.join(dirname, "configinput" + searchId + ".py")
 #    if not os.path.exists(configpyfile):
     shutil.copy(os.path.join(dirname, "configinput.py"), configpyfile)
-    patterns = {}
-    patterns["keyword_list_filter"] = "keyword_list_filter = ["+ searchValues[0]+"]";
-    patterns["consumer_key"] = "consumer_key = \""+ searchValues[2] + "\"";
-    patterns["consumer_secret"] = "consumer_secret = \""+ searchValues[3]+ "\"";
-    patterns["access_token"] = "access_token = \""+ searchValues[4]+ "\"";
-    patterns["access_secret"] = "access_secret = \""+ searchValues[5]+ "\"";
     
-    replace(configpyfile,patterns)
+    configinput = {
+        0 : "keyword_list_filter",
+        2 : "consumer_key",
+        3 : "consumer_secret",
+        4 : "access_secret",
+        5 : "access_token"
+    }
+    
+    replace(configpyfile,{x:searchValues[idt] for idt, x in configinput.items()})
 
 def launch_py(searchId, searchValues, pythonPath, dirname):
     create_py_files(searchId, searchValues, dirname) # just in case
