@@ -265,13 +265,13 @@ def main():
     ### Download pickles and config file from pickle bucket
     client = storage.Client()
     cblob = client.get_bucket(CONFIG_BUCKET).get_blob('observatoriohf.py')
-    fp = open(os.path.join(WDIR,PYDIR,'observatoriohf.py'),'w')
+    fp = open(os.path.join(WDIR,PYDIR,'observatoriohf.py'),'wb')
     cblob.download_to_file(fp)
     fp.close()
     blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
     for b in blobs:
         filename = re.sub(r'(?:([^\/]*)[\/$]){2}.*',r'\1',b.id)
-        fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'w')
+        fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'wb')
         b.download_to_file(fp)
         fp.close()
     
