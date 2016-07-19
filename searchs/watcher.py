@@ -49,10 +49,7 @@ def save_pid():
         logging.error('Failed to create pid file: '+ str(e))
 
 def check_pid(pid):
-    output = os.popen("tasklist /v /fo csv | findstr /i python | findstr /i " + pid).read()
-    if not output:
-        return False
-    return True
+    return int(os.popen("ps -p %d --no-headers | wc -l"%(int(pid) if len(pid) > 0 else 0,)).read().strip()) == 1
 
 #    """Check whether pid exists in the current process table.
 #    UNIX only.
@@ -148,7 +145,7 @@ def launch_py(searchId, searchValues, pythonPath, dirname):
     filename = os.path.join(dirname, "input" + searchId + ".py")
     # start python process
 #    print(filename)
-    os.system('start /b "" ' + pythonPath + ' ' + filename + ' /D ' + dirname )
+    os.system(pythonPath + ' ' + filename)
 
 def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
 #    print("launching " + searchId)
@@ -166,7 +163,7 @@ def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
         launch_py(searchId, searchValues, pythonPath, dirname)  
 
 def stop_py(pid):
-    os.popen("taskkill /PID " + pid + " /f")
+    os.popen("kill %d"%(pid,))
     return True
 
 def stop_py_if_run(searchId, searchStr, pythonPath, dirname):
@@ -205,9 +202,9 @@ def keep_analizer_alive(pythonPath, dirname):
             pid_data = f.read()
         f.close()
         if not check_pid(pid_data):
-            os.system('start /b "" ' + pythonPath + ' ' + filename)
+            os.system(pythonPath + ' ' + filename)
     else:
-        os.system('start /b "" ' + pythonPath + ' ' + filename)
+        os.system(pythonPath + ' ' + filename)
 
 def get_python_path(dirname):
     config = configparser.RawConfigParser(allow_no_value=True)
