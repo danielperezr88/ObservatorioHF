@@ -11,8 +11,6 @@ from os import remove, close
 #import subprocess
 from datetime import datetime, timedelta
 import time
-import configwatcher
-import configparser
 import logging
 import glob
 import re
@@ -80,14 +78,11 @@ def check_pid(pid):
     
 
 def get_files_to_watch(dirname):
-    # Get list of py files to check from db
-    #conn = mysql.connector.connect(user=configwatcher.dbuser, password=configwatcher.dbpassword,
-    #                               host=configwatcher.dbhost, database=configwatcher.dbdatabase)
     
     import observatoriohf
 
-    conn = MySQLdb.connections.Connection(user=configwatcher.dbuser,passwd=configwatcher.dbpassword,
-                                          host=configwatcher.dbhost,db=configwatcher.dbdatabase)
+    conn = MySQLdb.connections.Connection(user=observatoriohf.dbuser,passwd=observatoriohf.dbpassword,
+                                          host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
     
     cursor = conn.cursor()
     query = ("SELECT t1.id, t1.search, t1.active, t2.ckey, t2.consumer_secret, t2.access_token_key, t2.access_token_secret FROM `searchs` as t1  LEFT JOIN config as t2 ON t2.id= t1.config_id")
@@ -212,11 +207,6 @@ def keep_analizer_alive(pythonPath, dirname):
     else:
         os.system(pythonPath + ' ' + filename)
 
-def get_python_path(dirname):
-    config = configparser.RawConfigParser(allow_no_value=True)
-    config.readfp(open(os.path.join(dirname, "config.txt"), 'r'))
-    return config.get("root", "python_exe")
-
 def num(s):
     try:
         return int(s)
@@ -245,7 +235,6 @@ def move_from_to(dir_from, dir_to):
 def move_files(dirname):
     counter = 0
     dir_from = ''
-    #for dir_files in configwatcher.from_to_dirs:
     for dir_files in ['input','analysis']:
         if counter % 2 == 0:
             dir_from = os.path.join(dirname, dir_files)
@@ -285,17 +274,9 @@ def main():
     
     ### Generate configanalysis.py & configwatcher.py from bucketed config file
     cfgs = ['dbhost','dbuser','dbpassword','dbdatabase']
-    cfgfiles = ['configanalysis.py','configwatcher.py']
-    for f in cfgfiles:
-        replace(
-            os.path.join(WDIR,PYDIR,f),
-            {n:getattr(observatoriohf,n) for n in cfgs}
-        )
-    
-    ### Copy configanalysis.py into ../config.py
-    shutil.copyfile(
-        os.path.join(WDIR,PYDIR,'configanalysis.py'),
-        os.path.join(WDIR,'config.py')
+    replace(
+        os.path.join(WDIR,'config.py'),
+        {n:getattr(observatoriohf,n) for n in cfgs}
     )
     
     ### Generate configinput.py (input configuration template)
@@ -321,14 +302,11 @@ def main():
         for momo in files:
             os.chown(os.path.join(root, momo), uid, gid)
 
-    
-#    dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
-#    basename = os.path.basename(inspect.getfile(inspect.currentframe()))
+
     dirname = os.path.dirname(os.path.realpath(__file__))
     basename = os.path.basename(os.path.realpath(__file__))
 
     """Start log."""
-    #outputDir = os.path.join(dirname, configwatcher.directory)
     outputDir = os.path.join(dirname, "watcher")
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
@@ -337,12 +315,7 @@ def main():
     logging.info('Started')
     
     save_pid()
-    
-#    pyfiles = get_files_to_watch(dirname)
-#    print(pyfiles)
-#    pythonPath = get_python_path(dirname)
-#    keep_processes_alive(pyfiles, pythonPath, dirname)
-#
+
     """Infinite looop."""
     end = False
     while (not end):

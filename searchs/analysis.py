@@ -22,17 +22,13 @@ from time import sleep
 
 import MySQLdb.connections
 
-#import mysql
-#import mysql.connector
-#from mysql.connector import errorcode
-
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
 from sklearn.feature_extraction.text import CountVectorizer
 
 import spanish_corrector as sc
-import configanalysis
+import observatoriohf
 
 """                                 DECORATORS                              """
 
@@ -243,12 +239,9 @@ def uploadData(searchId, tweet, sentiment, confidence):
             sentimentVal = 1
         elif (sentiment == "neg" ):
             sentimentVal = -1
-
-        #conn = mysql.connector.connect(user=configanalysis.dbuser, password=configanalysis.dbpassword,
-        #                               host=configanalysis.dbhost, database=configanalysis.dbdatabase)
         
-        conn = MySQLdb.connections.Connection(user=configanalysis.dbuser,passwd=configanalysis.dbpassword,
-                                          host=configanalysis.dbhost,db=configanalysis.dbdatabase)
+        conn = MySQLdb.connections.Connection(user=observatoriohf.dbuser,passwd=observatoriohf.dbpassword,
+                                          host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
 
         retweetedFrom = ''
         retweetedLat = ''
@@ -331,9 +324,7 @@ def evaluateFiles(classifier, word_features, inputDir, outputDir):
 def main():
     """ Create/Retrieve working dirs """
     dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    #inputDir = os.path.join(dirname, configanalysis.inputDir)
     inputDir = os.path.join(dirname, "analysis")
-    #outputDir = os.path.join(dirname, configanalysis.outputDir)
     outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
     
