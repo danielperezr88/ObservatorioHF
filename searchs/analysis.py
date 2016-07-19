@@ -20,9 +20,11 @@ import regex as re
 
 from time import sleep
 
-import mysql
-import mysql.connector
-from mysql.connector import errorcode
+import MySQLdb.connections
+
+#import mysql
+#import mysql.connector
+#from mysql.connector import errorcode
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -242,8 +244,11 @@ def uploadData(searchId, tweet, sentiment, confidence):
         elif (sentiment == "neg" ):
             sentimentVal = -1
 
-        conn = mysql.connector.connect(user=configanalysis.dbuser, password=configanalysis.dbpassword,
-                                       host=configanalysis.dbhost, database=configanalysis.dbdatabase)
+        #conn = mysql.connector.connect(user=configanalysis.dbuser, password=configanalysis.dbpassword,
+        #                               host=configanalysis.dbhost, database=configanalysis.dbdatabase)
+        
+        conn = MySQLdb.connections.Connection(user=configanalysis.dbuser,passwd=configanalysis.dbpassword,
+                                          host=configanalysis.dbhost,db=configanalysis.dbdatabase)
 
         retweetedFrom = ''
         retweetedLat = ''

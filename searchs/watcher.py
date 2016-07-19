@@ -25,8 +25,8 @@ from gcloud import storage
 from tempfile import mkstemp
 import shutil
 
-import mysql.connector
-from mysql.connector import errorcode
+import MySQLdb.connections
+
 from sys import executable as pythonPath
 
 
@@ -81,8 +81,14 @@ def check_pid(pid):
 
 def get_files_to_watch(dirname):
     # Get list of py files to check from db
-    conn = mysql.connector.connect(user=configwatcher.dbuser, password=configwatcher.dbpassword,
-                                   host=configwatcher.dbhost, database=configwatcher.dbdatabase)
+    #conn = mysql.connector.connect(user=configwatcher.dbuser, password=configwatcher.dbpassword,
+    #                               host=configwatcher.dbhost, database=configwatcher.dbdatabase)
+    
+    import observatoriohf
+
+    conn = MySQLdb.connections.Connection(user=configwatcher.dbuser,passwd=configwatcher.dbpassword,
+                                          host=configwatcher.dbhost,db=configwatcher.dbdatabase)
+    
     cursor = conn.cursor()
     query = ("SELECT t1.id, t1.search, t1.active, t2.ckey, t2.consumer_secret, t2.access_token_key, t2.access_token_secret FROM `searchs` as t1  LEFT JOIN config as t2 ON t2.id= t1.config_id")
     cursor.execute(query)
@@ -274,9 +280,8 @@ def main():
         fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'wb')
         b.download_to_file(fp)
         fp.close()
-    
-    import observatoriohf
         
+    import observatoriohf
     
     ### Generate configanalysis.py & configwatcher.py from bucketed config file
     cfgs = ['dbhost','dbuser','dbpassword','dbdatabase']
