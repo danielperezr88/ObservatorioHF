@@ -27,6 +27,7 @@ import shutil
 
 import mysql.connector
 from mysql.connector import errorcode
+from sys import executable as pythonPath
 
 
 PICKLE_BUCKET = 'pickles-python'
@@ -190,8 +191,8 @@ def launch_or_stop(searchId, searchValues, pythonPath, dirname):
         
 
 def keep_processes_alive(pyfiles, pythonPath, dirname):
-    for searchId in pyfiles:
-        launch_or_stop(str(searchId), pyfiles[searchId], pythonPath, dirname)
+    for searchId, searchVals in pyfiles.items():
+        launch_or_stop(str(searchId), searchVals, pythonPath, dirname)
 
 def keep_analizer_alive(pythonPath, dirname):
     analizer_name = "analysis.py"
@@ -337,7 +338,7 @@ def main():
     
 #    pyfiles = get_files_to_watch(dirname)
 #    print(pyfiles)
-    pythonPath = get_python_path(dirname)
+#    pythonPath = get_python_path(dirname)
 #    keep_processes_alive(pyfiles, pythonPath, dirname)
 #
     """Infinite looop."""
