@@ -20,10 +20,9 @@ import regex as re
 
 from time import sleep
 
-import MySQLdb.connections
+import nltk
 
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
+import MySQLdb.connections
 
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -137,6 +136,9 @@ def save_pid():
 
 """
 def find_features(document):
+    
+    from nltk.tokenize import word_tokenize
+    from nltk.corpus import stopwords
 
     """ Preprocess content """
     #document = quitar_acentos(re.sub(r'[?|$|.|!|¡|¿|,|:|;]',r'',document).lower())
@@ -328,6 +330,13 @@ def main():
     outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
     
+    """ Maybe download nltk dependencies """
+    maybeCreateDirs(['/root/nltk_data'])
+    if not os.path.exists('/root/nltk_data/tokenizers/punkt'):
+        nltk.download('punkt','/root/nltk_data')
+    if not os.path.exists('/root/nltk_data/corpora/stopwords'):
+        nltk.download('stopwords','/root/nltk_data')
+    
     """ Logging configuration """
     basename = os.path.basename(inspect.getfile(inspect.currentframe()))
     logfilename = os.path.join(outputDir,basename) + ".log"
@@ -349,5 +358,6 @@ def main():
     logging.info('Finished')
     
 if __name__ == '__main__':
+    
     main()
 
