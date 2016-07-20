@@ -338,8 +338,8 @@ def main():
     save_pid()
     
     """ Dependency retrieval """    
-    classifier = loadDependency("class_grid_search.pickle","pickled_algos")
-    word_features = sc.words(loadDependency("dictRAE2010_spanish_tilded_notPref_notSuff.txt","pickled_algos"))
+    classifier = loadDependency("class_grid_search.pickle",os.path.join(dirname,"pickled_algos"))
+    word_features = sc.words(loadDependency("dictRAE2010_spanish_tilded_notPref_notSuff.txt",os.path.join(dirname,"pickled_algos")))
     
     """Infinite looop."""
     while True:
