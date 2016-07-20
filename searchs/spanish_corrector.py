@@ -14,13 +14,14 @@ def train(features):
     for f in features:
         model[f] += 1
     return model
-
-dictRAE = open(os.path.join('pickled_algos','dictRAE2010_spanish_tilded_notPref_notSuff.txt'),'rb')
+    
+dirname = os.path.dirname(os.path.realpath(__file__))
+dictRAE = open(os.path.join(dirname,'pickled_algos','dictRAE2010_spanish_tilded_notPref_notSuff.txt'),'rb')
 NWORDS = train(words(dictRAE.read().decode()))
 dictRAE.close()
 
 for count in range(0,102):
-    fp2 = open(os.path.join('pickled_algos','complete_parsed_books_dict'+str(count)+'.pickle'),'rb')
+    fp2 = open(os.path.join(dirname,'pickled_algos','complete_parsed_books_dict'+str(count)+'.pickle'),'rb')
     books = pickle.load(fp2)
     fp2.close()
     for name, each in books.items():
