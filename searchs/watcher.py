@@ -145,38 +145,36 @@ def launch_py(searchId, searchValues, pythonPath, dirname):
     dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
     filename = os.path.join(dirname, "input" + searchId + ".py")
     # start python process
-#    print(filename)
-    #os.system(pythonPath + ' ' + filename)
-    subprocess.Popen([pythonPath,filename])
+    return subprocess.Popen([pythonPath,filename])
 
 def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
-#    print("launching " + searchId)
     pidfile = os.path.join(dirname, "input" + searchId + ".py.pid")
-#    print( pidfile)
     if os.path.exists(pidfile):
         pid_data = ''
         # check if pid is running
         with open(pidfile, 'r') as f:
             pid_data = f.read()
-        f.close()
         if not check_pid(pid_data):
-            launch_py(searchId, searchValues, pythonPath, dirname)
+            pid = launch_py(searchId, searchValues, pythonPath, dirname)
+            os.remove(pidfile)
+            with open(pidfile, 'w') as f:
+                f.write(pid)
     else:
-        launch_py(searchId, searchValues, pythonPath, dirname)  
+        pid = launch_py(searchId, searchValues, pythonPath, dirname)  
+        with open(pidfile, 'w') as f:
+            f.write(pid)
 
 def stop_py(pid):
     os.popen("kill %d"%(pid,))
     return True
 
 def stop_py_if_run(searchId, searchStr, pythonPath, dirname):
-#    print("Stoping " + searchId)
     pidfile = os.path.join(dirname, "input" + searchId + ".py.pid")
     if os.path.exists(pidfile):
         pid_data = ''
         # check if pid is running
         with open(pidfile, 'r') as f:
             pid_data = f.read()
-        f.close()
         if check_pid(pid_data):
             stop_py(pid_data)
         remove(pidfile)
@@ -202,13 +200,16 @@ def keep_analizer_alive(pythonPath, dirname):
         # check if pid is running
         with open(pidfile, 'r') as f:
             pid_data = f.read()
-        f.close()
         if not check_pid(pid_data):
-            #os.system(pythonPath + ' ' + filename)
-            subprocess.Popen([pythonPath,filename])
+            pid = subprocess.Popen([pythonPath,filename])
+            os.remove(pidfile)
+            with open(pidfile, 'w') as f:
+                f.write(pid)
     else:
-        #os.system(pythonPath + ' ' + filename)
-        subprocess.Popen([pythonPath,filename])
+        pid = subprocess.Popen([pythonPath,filename])
+        os.remove(pidfile)
+        with open(pidfile, 'w') as f:
+            f.write(pid)
 
 def num(s):
     try:
@@ -232,7 +233,6 @@ def move_from_to(dir_from, dir_to):
             and not basenameFile.startswith(oneSecondBeforeStr) \
             and not basenameFile.startswith(twoSecondBeforeStr)):
             toFile = os.path.join(dir_to, os.path.basename(fromFile))
-#            print(fromFile, toFile)
             os.rename(fromFile, toFile)
 
 def move_files(dirname):
@@ -324,7 +324,6 @@ def main():
     end = False
     while (not end):
         pyfiles = get_files_to_watch(dirname)
-#        print(pyfiles)
         keep_processes_alive(pyfiles, pythonPath, dirname)
         keep_analizer_alive(pythonPath, dirname)
         move_files(dirname)
