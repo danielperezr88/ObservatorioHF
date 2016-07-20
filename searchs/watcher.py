@@ -8,7 +8,7 @@ Created on Tue Dec 01 12:13:00 2015
 import inspect, os, os.path
 from os import remove, close
 #import psutil
-#import subprocess
+import subprocess
 from datetime import datetime, timedelta
 import time
 import logging
@@ -146,7 +146,8 @@ def launch_py(searchId, searchValues, pythonPath, dirname):
     filename = os.path.join(dirname, "input" + searchId + ".py")
     # start python process
 #    print(filename)
-    os.system(pythonPath + ' ' + filename)
+    #os.system(pythonPath + ' ' + filename)
+    subprocess.Popen([pythonPath,filename])
 
 def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
 #    print("launching " + searchId)
@@ -203,9 +204,11 @@ def keep_analizer_alive(pythonPath, dirname):
             pid_data = f.read()
         f.close()
         if not check_pid(pid_data):
-            os.system(pythonPath + ' ' + filename)
+            #os.system(pythonPath + ' ' + filename)
+            subprocess.Popen([pythonPath,filename])
     else:
-        os.system(pythonPath + ' ' + filename)
+        #os.system(pythonPath + ' ' + filename)
+        subprocess.Popen([pythonPath,filename])
 
 def num(s):
     try:
