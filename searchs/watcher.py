@@ -102,13 +102,13 @@ def replace(file_path, patterns):
     fh, abs_path = mkstemp()
     with open(abs_path,'w') as new_file:
         if not os.path.exists(file_path):
-            for pline in [pname + ' = "' + pvalue + '"\n' for pname, pvalue in patterns.items()]:
+            for pline in ["%s = %s\n"%(k,str([v[0] if len(v) == 1 else v])[1:-1]) for k, v in {k:v.replace("'","").split(',') for k, v in patterns.items()}.items()]:
                 new_file.write(pline)
         else:
             with open(file_path) as old_file:
                 for line in old_file:
                     changed = False
-                    for pname, pline in [(pname,pname + ' = "' + pvalue + '"\n') for pname, pvalue in patterns.items()]:
+                    for pname, pline in [(k,"%s = %s\n"%(k,str([v[0] if len(v) == 1 else v])[1:-1])) for k, v in {k:v.replace("'","").split(',') for k, v in patterns.items()}.items()]:
                         if line.strip().startswith(pname):
                             changed = True
                             new_file.write(pline)
@@ -130,7 +130,7 @@ def create_py_files(searchId, searchValues, dirname):
 #    if not os.path.exists(configpyfile):
     shutil.copy(os.path.join(dirname, "configinput.py"), configpyfile)
     
-    configinput = {
+    conf = {
         0 : "keyword_list_filter",
         2 : "consumer_key",
         3 : "consumer_secret",
@@ -138,7 +138,7 @@ def create_py_files(searchId, searchValues, dirname):
         5 : "access_token"
     }
     
-    replace(configpyfile,{x:searchValues[idt] for idt, x in configinput.items()})
+    replace(configpyfile,{x:searchValues[idt] for idt, x in conf.items()})
 
 def launch_py(searchId, searchValues, pythonPath, dirname):
     create_py_files(searchId, searchValues, dirname) # just in case
@@ -266,9 +266,10 @@ def main():
     blobs = client.get_bucket(PICKLE_BUCKET).list_blobs()
     for b in blobs:
         filename = re.sub(r'(?:([^\/]*)[\/$]){2}.*',r'\1',b.id)
-        fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'wb')
-        b.download_to_file(fp)
-        fp.close()
+        if not os.path.exists(os.path.join(WDIR,PYDIR,PICKLEDIR,filename)):
+            fp = open(os.path.join(WDIR,PYDIR,PICKLEDIR,filename),'wb')
+            b.download_to_file(fp)
+            fp.close()
         
     import observatoriohf
     

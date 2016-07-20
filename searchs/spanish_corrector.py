@@ -5,7 +5,7 @@ Created on Wed May 11 14:06:35 2016
 @author: Dani
 """
 
-import re, collections, pickle, sys
+import re, collections, pickle, sys, os
 
 def words(text): return re.findall('[a-záéíóúàèìòùâêîôûüñ \-]+', text.lower()) 
 
@@ -15,12 +15,12 @@ def train(features):
         model[f] += 1
     return model
 
-dictRAE = open('pickled_algos\\dictRAE2010_spanish_tilded_notPref_notSuff.txt','rb')
+dictRAE = open(os.path.join('pickled_algos','dictRAE2010_spanish_tilded_notPref_notSuff.txt'),'rb')
 NWORDS = train(words(dictRAE.read().decode()))
 dictRAE.close()
 
 for count in range(0,102):
-    fp2 = open('pickled_algos\\complete_parsed_books_dict'+str(count)+'.pickle','rb')
+    fp2 = open(os.path.join('pickled_algos','complete_parsed_books_dict'+str(count)+'.pickle'),'rb')
     books = pickle.load(fp2)
     fp2.close()
     for name, each in books.items():
