@@ -103,7 +103,7 @@ def replace(file_path, patterns):
     with open(abs_path,'w') as new_file:
         if not os.path.exists(file_path):
             for pline in ["%s = %s\n"%(k,str([v[0] if len(v) == 1 else v])[1:-1]) for k, v in {k:v.replace("'","").split(',') for k, v in patterns.items()}.items()]:
-                new_file.write(pline)
+                new_file.write(pline.replace("'","\""))
         else:
             with open(file_path) as old_file:
                 for line in old_file:
@@ -111,7 +111,7 @@ def replace(file_path, patterns):
                     for pname, pline in [(k,"%s = %s\n"%(k,str([v[0] if len(v) == 1 else v])[1:-1])) for k, v in {k:v.replace("'","").split(',') for k, v in patterns.items()}.items()]:
                         if line.strip().startswith(pname):
                             changed = True
-                            new_file.write(pline)
+                            new_file.write(pline.replace("'","\""))
                     if not changed:
                         new_file.write(line)
                 
@@ -134,8 +134,8 @@ def create_py_files(searchId, searchValues, dirname):
         0 : "keyword_list_filter",
         2 : "consumer_key",
         3 : "consumer_secret",
-        4 : "access_secret",
-        5 : "access_token"
+        5 : "access_secret",
+        4 : "access_token"
     }
     
     replace(configpyfile,{x:searchValues[idt] for idt, x in conf.items()})
@@ -145,7 +145,7 @@ def launch_py(searchId, searchValues, pythonPath, dirname):
     dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
     filename = os.path.join(dirname, "input" + searchId + ".py")
     # start python process
-    return subprocess.Popen([pythonPath,filename])
+    return str(subprocess.Popen([pythonPath,filename]).pid)
 
 def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
     pidfile = os.path.join(dirname, "input" + searchId + ".py.pid")
@@ -201,13 +201,12 @@ def keep_analizer_alive(pythonPath, dirname):
         with open(pidfile, 'r') as f:
             pid_data = f.read()
         if not check_pid(pid_data):
-            pid = subprocess.Popen([pythonPath,filename])
+            pid = str(subprocess.Popen([pythonPath,filename]).pid)
             os.remove(pidfile)
             with open(pidfile, 'w') as f:
                 f.write(pid)
     else:
-        pid = subprocess.Popen([pythonPath,filename])
-        os.remove(pidfile)
+        pid = str(subprocess.Popen([pythonPath,filename]).pid)
         with open(pidfile, 'w') as f:
             f.write(pid)
 
