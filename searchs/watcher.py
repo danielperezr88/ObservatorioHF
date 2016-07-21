@@ -254,7 +254,7 @@ def main():
     ### Create needed directories
     maybeCreateDirs([
             'input','watcher','analysis','analized',
-            os.path.join('analized','error'),'pickled_algos'
+            'pickled_algos'#,os.path.join('analized','error')
         ],
         os.path.join(WDIR,PYDIR)
     )

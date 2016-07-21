@@ -285,6 +285,9 @@ def analizeLine(searchId, line, classifier, word_features):
         try:
             tweet = json.loads(line)
             
+            if not 'lang' in tweet.keys():
+                return True
+            
             if(tweet['lang']!='es'):
                 return True
                 
@@ -304,22 +307,12 @@ def analizeLine(searchId, line, classifier, word_features):
 def evaluateFiles(classifier, word_features, inputDir, outputDir):
     files = glob.glob(os.path.join(inputDir, "*"))
     for file in files:
-        correct = True
         with open(file) as in_file:
             searchId = file.split('_input')[1].split('.')[0]
             for line in in_file:
-                correct = correct & analizeLine(searchId,line, classifier, word_features)
-            in_file.close()
-        if (correct):
-            #"""Move used file to output dir."""
-            #usedFile = os.path.join(outputDir, os.path.basename(file))
-            #os.rename(file, usedFile)
-            os.remove(file)
-        else:
-            errorDir = os.path.join(outputDir, "error")
-            maybeCreateDirs(errorDir)
-            errorFile = os.path.join(errorDir, os.path.basename(file))
-            os.rename(file, errorFile)
+                if not analizeLine(searchId,line, classifier, word_features):
+                    logging.error("\t%s"%(line,))
+        os.remove(file)
             
 """                                   MAIN                                  """
 
