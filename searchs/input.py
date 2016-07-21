@@ -117,7 +117,7 @@ def main():
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     logfilename = os.path.join(outputDir,basename) + ".log"
-    logging.basicConfig(filename=logfilename,level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename=logfilename,level=logging.ERROR, format='%(asctime)s %(message)s')
     logging.info('Started')
     save_pid()
 

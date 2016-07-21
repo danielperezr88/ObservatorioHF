@@ -340,7 +340,7 @@ def main():
     """ Logging configuration """
     basename = os.path.basename(inspect.getfile(inspect.currentframe()))
     logfilename = os.path.join(outputDir,basename) + ".log"
-    logging.basicConfig(filename=logfilename,level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename=logfilename,level=logging.ERROR, format='%(asctime)s %(message)s')
     logging.info('Started')
     
     """ Process Id file creation """
