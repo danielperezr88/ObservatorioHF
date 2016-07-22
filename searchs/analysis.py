@@ -249,7 +249,7 @@ def uploadData(searchId, tweet, sentiment, confidence):
         retweetedLat = ''
         retweetedLon = ''
         
-        emoji_pattern = re.compile(u"[\u0100-\uFFFF\U0001F1E0-\U0001F1FF\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\UFFFFFFFF]+", flags=re.UNICODE)
+        emoji_pattern = re.compile(u"[\u0100-\uFFFF\U0001F1E0-\U0001F1FF\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001FFFF]+", flags=re.UNICODE)
         
         if ('retweeted_status' in tweet):
             retweetedFrom = tweet['retweeted_status']['user']['screen_name']
