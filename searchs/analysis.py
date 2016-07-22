@@ -248,6 +248,9 @@ def uploadData(searchId, tweet, sentiment, confidence):
         retweetedFrom = ''
         retweetedLat = ''
         retweetedLon = ''
+        
+        emoji_pattern = re.compile(u"[\u0100-\uFFFF\U0001F1E0-\U0001F1FF\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\UFFFFFFFF]+", flags=re.UNICODE)
+        
         if ('retweeted_status' in tweet):
             retweetedFrom = tweet['retweeted_status']['user']['screen_name']
             retweetedLat, retweetedLon = GeoLocalize('', tweet['retweeted_status']['user']['location'])
@@ -256,18 +259,18 @@ def uploadData(searchId, tweet, sentiment, confidence):
         registro = (
                     searchId,
                     date_str,                       # tweet_time
-                    tweet['user']['screen_name'],   # tweet_author
+                    emoji_pattern.sub(r'',tweet['user']['screen_name']),   # tweet_author
                     tweet['user']['id_str'],        # tweet_authod_id
-                    tweet['user']['location'],       
+                    emoji_pattern.sub(r'',str(tweet['user']['location'])),       
                     tweet['lang'],                  # tweet_language
                     tweet['coordinates'],           # tweet_geo
-                    tweet['text'],                  # tweet_text
+                    emoji_pattern.sub(r'',tweet['text']),                  # tweet_text
                     '{}'.format(sentiment),         # sentiment
                     confidence,                     # confidence
                     sentimentVal,                   # 1, 0, -1
                     lat,
                     lon,
-                    retweetedFrom,                  # retweeted_tweet_author
+                    emoji_pattern.sub(r'',retweetedFrom),                  # retweeted_tweet_author
                     retweetedLat, 
                     retweetedLon
                     )
