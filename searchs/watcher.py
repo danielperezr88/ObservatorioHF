@@ -165,7 +165,7 @@ def launch_py_if_stop(searchId, searchValues, pythonPath, dirname):
             f.write(pid)
 
 def stop_py(pid):
-    os.popen("kill %d"%(pid,))
+    os.popen("kill %s"%(pid,))
     return True
 
 def stop_py_if_run(searchId, searchStr, pythonPath, dirname):
