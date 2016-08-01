@@ -349,7 +349,7 @@ def main():
     """Infinite looop."""
     while True:
         evaluateFiles(classifier, word_features, inputDir, outputDir)
-        sleep(2) # delays for 2 seconds
+        sleep(0.25) # delays for 0.25 seconds
 
     logging.info('Finished')
     
