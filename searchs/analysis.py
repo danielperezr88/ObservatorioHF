@@ -212,7 +212,7 @@ def GetGoogleLocation(location):
                 geoLoc = jsonDecoded["results"][0]["geometry"]["location"]
                 return geoLoc["lat"], geoLoc["lng"]
             else:
-                return '',''
+                return 0, 0
         except BaseException as e:
             print("Error GetGoogleLocation: %s" % str(e))
             logging.error("Error GeoLocalize: %s" % str(e))
@@ -220,7 +220,7 @@ def GetGoogleLocation(location):
         else:
             break
     else:
-        return '',''
+        return 0, 0
 
 def GeoLocalize(coordinates, location):
     if (coordinates if coordinates != None else '') != '':
@@ -229,7 +229,7 @@ def GeoLocalize(coordinates, location):
     if (location if location != None else '') != '':
         return GetGoogleLocation(location.lower())
     
-    return '',''
+    return 0, 0
     
 def uploadData(searchId, tweet, sentiment, confidence):
     try:
@@ -246,8 +246,8 @@ def uploadData(searchId, tweet, sentiment, confidence):
                                           host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
 
         retweetedFrom = ''
-        retweetedLat = ''
-        retweetedLon = ''
+        retweetedLat = 0
+        retweetedLon = 0
         
         emoji_pattern = re.compile(u"[\u0100-\uFFFF\U0001F1E0-\U0001F1FF\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001FFFF]+", flags=re.UNICODE)
         
@@ -255,7 +255,7 @@ def uploadData(searchId, tweet, sentiment, confidence):
             retweetedFrom = tweet['retweeted_status']['user']['screen_name']
             retweetedLat, retweetedLon = GeoLocalize('', tweet['retweeted_status']['user']['location'])
         cursor = conn.cursor()
-        anadir_registro = ("INSERT INTO tweets (search_id, created_at, name, id_str, location, lang, geo, text, sentiment, confidence, sentimentVal, geoLat, geoLon, retweetedFrom, retweetedLat, retweetedLon) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")  
+        anadir_registro = ("INSERT INTO tweets (search_id, created_at, name, id_str, location, lang, geo, text, sentiment, confidence, sentimentVal, geoLat, geoLon, retweetedFrom, retweetedLat, retweetedLon, words) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")  
         registro = (
                     searchId,
                     date_str,                       # tweet_time
@@ -272,7 +272,8 @@ def uploadData(searchId, tweet, sentiment, confidence):
                     lon,
                     emoji_pattern.sub(r'',retweetedFrom),                  # retweeted_tweet_author
                     retweetedLat, 
-                    retweetedLon
+                    retweetedLon,
+					''
                     )
         cursor.execute(anadir_registro, tuple((reg if reg != None else '') for reg in registro))    
         conn.commit()
