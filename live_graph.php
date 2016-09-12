@@ -10,6 +10,7 @@
 	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']));
 
 	$refreshInterval = 4; // seconds
+	$minutesDelay = 5; // minutes
 	
     loadDependencies(array(
       "scripts"     =>  array(
@@ -54,7 +55,7 @@
                     $ids[] = $row['id'];
                 }
                 echo implode(",\n",$dataset);
-                $idsStr = empty($ids) ? '' : '?searchs=' . implode(',',$ids) . '&refresh=' . $refreshInterval;
+                $idsStr = empty($ids) ? '' : '?searchs=' . implode(',',$ids) . '&refresh=' . $refreshInterval . '&delay=' . $minutesDelay;
             ?>
             /*"dataset": [
                 {

@@ -4,7 +4,8 @@
 
 $searchs = GetGet("searchs", "");
 $refreshInterval = GetGet("refresh", "");
-$returned  = $sql_tools->GetValuesLastSeconds($searchs, $refreshInterval);
+$delayMinutes = GetGet("delay", 5);
+$returned  = $sql_tools->GetValuesLastSeconds($searchs, $refreshInterval, $delayMinutes);
 $returnedSearch = array();
 foreach($returned as $val)
 {

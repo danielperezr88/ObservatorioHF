@@ -192,14 +192,14 @@ if(!class_exists("sql_tools"))
       return self::GetValuesFromQuery($query, true);
     }
     
-    function GetValuesLastSeconds($search_ids, $seconds)
+    function GetValuesLastSeconds($search_ids, $seconds_window, $delay_minutes)
     {
       if (is_array($search_ids))
         $search_ids = implode(',', $search_ids);
       
-      $query = "SELECT search_id,SUM(sentimentVal) as value, COUNT(sentimentVal) FROM `tweets` "
-        ."where search_id IN (".$search_ids .") AND saved > (now() - INTERVAL ".$seconds." SECOND) "
-        ."group by search_id";
+      $query = "SELECT search_id,SUM(sentimentVal) as value, COUNT(sentimentVal) FROM `tweets` where search_id IN (".$search_ids .") "
+        ."AND saved > (now() - INTERVAL ".$seconds_window." SECOND - INTERVAL ".$delay_minutes." MINUTE) "
+        ."AND saved < (now() - INTERVAL ".$delay_minutes." MINUTE) group by search_id";
       //print($query);
       return self::GetValuesFromQuery($query);
     }
