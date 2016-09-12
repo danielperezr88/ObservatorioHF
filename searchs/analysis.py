@@ -22,7 +22,7 @@ from time import sleep
 
 import nltk
 
-import MySQLdb.connections
+import MySQLdb.connections as mysqlconn
 
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -44,6 +44,12 @@ def memoize(f):
   return memodict().__getitem__
 
 """                                 UTILITIES                               """
+
+"""
+    sign(<float|int>) -> <int>
+        Returns -1/0/1 for cases input<0/input==0/input>0 respectively
+"""
+sign = lambda x: int(x>0) - int(x<0)
 
 """
     removeAccents(<string>) -> <string> (unicodedata)
@@ -141,15 +147,16 @@ def find_features(document):
     from nltk.corpus import stopwords
 
     """ Preprocess content """
-    #document = quitar_acentos(re.sub(r'[?|$|.|!|¡|¿|,|:|;]',r'',document).lower())
-    document = re.sub(r'((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[.\!\/\\w]*))?)',r' ',document).lower()
-    document = re.sub(r'[.|!|¡|¿|,|:|;|_]',r' ',document).lower()
-    
+    # document = quitar_acentos(re.sub(r'[?|$|.|!|¡|¿|,|:|;]',r'',document).lower())
+    document = re.sub(
+        r'((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[.\!\/\\w]*))?)',
+        r' ', document).lower()
+    document = re.sub(r'[.|!|¡|¿|,|:|;|_]', r' ', document).lower()
+
     """ Tokenize """
-    #words = word_tokenize(document.replace('?','ë').replace('_',' '),language="spanish")
-    count_vect = CountVectorizer(stop_words=None)
-    words = count_vect.build_analyzer().__call__(document.replace('?','ë'))
-    
+    count_vect = CountVectorizer(stop_words=None, token_pattern='(?u)\\b\\w+\\b')
+    words = count_vect.build_analyzer().__call__(document.replace('?', 'ë'))
+
     """ Maybe Spell Correct + Rule-Based Pruning """
     corrected = []
     for each in words:
@@ -157,37 +164,36 @@ def find_features(document):
         """ RULE-BASED PRUNING """
 
         """ Words not containing usual language characters """
-        if not re.search(r'[a-zA-Záéíóúàèìòùîüñ \-]',each):
+        if not re.search(r'[a-zA-Záéíóúàèìòùîüñ \-]', each):
             continue
         """ URLs """
-        if re.match(r'http.*',each):
+        if re.match(r'http.*', each):
             continue
         """ RT twitter retweeted special word """
         if each.lower() == 'rt':
             continue
         """ @ twitter user reference special prefix """
-        if re.match(r'@.*',each):
+        if re.match(r'@.*', each):
             continue
         """ # twitter hashtag special prefix """
-        if re.match(r'#.*',each):
+        if re.match(r'#.*', each):
             continue
         """ Words containing numbers """
-        if re.match(r'[^0-9]*[0-9]',each):
+        if re.match(r'[^0-9]*[0-9]', each):
             continue
 
-
         """ MAYBE SPELL CORRECT """
-        
+
         """ Condition for Spell Correct: Word contains symbols """
-        if re.search(r'[^a-zA-Záéíóúàèìòùîüñ \-]',each):
+        if re.search(r'[^a-zA-Záéíóúàèìòùîüñ \-]', each):
             corrected.append(sc.correct(each))
         else:
             corrected.append(each)
-            
+
     """ Stop-word Pruning """
     stop_words = set(stopwords.words("spanish"))
     features = [w for w in corrected if w not in stop_words]
-    
+
     """ Filtered features  """
     return features
       
@@ -222,101 +228,47 @@ def GetGoogleLocation(location):
     else:
         return 0, 0
 
-def GeoLocalize(coordinates, location):
-    if (coordinates if coordinates != None else '') != '':
-        return coordinates['coordinates'][0], coordinates['coordinates'][1]
+def GeoLocalize(location):
         
     if (location if location != None else '') != '':
-        return GetGoogleLocation(location.lower())
+        return GetGoogleLocation(location.lower()) + (1,)
     
-    return 0, 0
+    return 0, 0, 0
+
+def analizeTweets(classifier, word_features):
     
-def uploadData(searchId, tweet, sentiment, confidence):
+    dbconfig = dict(user=observatoriohf.dbuser,passwd=observatoriohf.dbpassword,
+                    host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
+    
+    conn = mysqlconn.Connection(**dbconfig)
+
+    cur = conn.cursor()
+    fetch_unclassified = "select id, tweet, geoLat, geoLon, location from tweets where confidence = 0 limit 10000"
+    update_polarity = "update tweets set confidence = %s, sentiment = %s, sentimentVal = %s, geoLat = %s, geoLon = %s, geo_is_inferred = %s where id = %s"
+
     try:
-        date_object = parser.parse(tweet['created_at'])
-        date_str = date_object.strftime("%Y-%m-%d %H:%M:%S")
-        lat, lon = GeoLocalize(tweet['coordinates'], tweet['user']['location'])
-        sentimentVal = 0
-        if (sentiment == "pos" ):
-            sentimentVal = 1
-        elif (sentiment == "neg" ):
-            sentimentVal = -1
-        
-        conn = MySQLdb.connections.Connection(user=observatoriohf.dbuser,passwd=observatoriohf.dbpassword,
-                                          host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
 
-        retweetedFrom = ''
-        retweetedLat = 0
-        retweetedLon = 0
-        
-        emoji_pattern = re.compile(u"[\u0100-\uFFFF\U0001F1E0-\U0001F1FF\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001FFFF]+", flags=re.UNICODE)
-        
-        if ('retweeted_status' in tweet):
-            retweetedFrom = tweet['retweeted_status']['user']['screen_name']
-            retweetedLat, retweetedLon = GeoLocalize('', tweet['retweeted_status']['user']['location'])
-        cursor = conn.cursor()
-        anadir_registro = ("INSERT INTO tweets (search_id, created_at, name, id_str, location, lang, geo, text, sentiment, confidence, sentimentVal, geoLat, geoLon, retweetedFrom, retweetedLat, retweetedLon, words) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")  
-        registro = (
-                    searchId,
-                    date_str,                       # tweet_time
-                    emoji_pattern.sub(r'',tweet['user']['screen_name']),   # tweet_author
-                    tweet['user']['id_str'],        # tweet_authod_id
-                    emoji_pattern.sub(r'',str(tweet['user']['location'])),       
-                    tweet['lang'],                  # tweet_language
-                    tweet['coordinates'],           # tweet_geo
-                    emoji_pattern.sub(r'',tweet['text']),                  # tweet_text
-                    '{}'.format(sentiment),         # sentiment
-                    confidence,                     # confidence
-                    sentimentVal,                   # 1, 0, -1
-                    lat,
-                    lon,
-                    emoji_pattern.sub(r'',retweetedFrom),                  # retweeted_tweet_author
-                    retweetedLat, 
-                    retweetedLon,
-					''
-                    )
-        cursor.execute(anadir_registro, tuple((reg if reg != None else '') for reg in registro))    
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-    except BaseException as e:
-        print('Failed to upload data: '+ str(e))
-        return False
+        cur.execute(fetch_unclassified)
+        conn2 = mysqlconn.Connection(**dbconfig)
+        cur2 = conn2.cursor()
+        for row in cur:
 
-def analizeLine(searchId, line, classifier, word_features):
-    if line not in ['\n', '\r\n']:
-        try:
-            tweet = json.loads(line)
+            feats = find_features(row[1])
+            sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
+            lat, lon, geo_is_inferred = GeoLocalize(row[4]) if any([row[2] != 0, row[3] != 0]) else (row[2], row[3], 0)
             
-            if not 'lang' in tweet.keys():
-                return True
-            
-            if(tweet['lang']!='es'):
-                return True
-                
-            feats = find_features(tweet['text'])
-            sentiment, confidence = retrieveClassAndConfidence(classifier,feats)
-            """Save it into db."""
-            return uploadData(searchId, tweet, sentiment, confidence)
-        except ValueError:
-            # TODO: Save it into a file
-            print("Error found to be saved:", line)
-            return False
-        except BaseException as e:
-            logging.error('Failed to analizeLine: '+ str(e))
-            return False
-    return True
+            cur2.execute(update_polarity, (confidence, sentiment, sign(confidence), lat, lon, geo_is_inferred, row[0]))
 
-def evaluateFiles(classifier, word_features, inputDir, outputDir):
-    files = glob.glob(os.path.join(inputDir, "*"))
-    for file in files:
-        with open(file) as in_file:
-            searchId = file.split('_input')[1].split('.')[0]
-            for line in in_file:
-                if not analizeLine(searchId,line, classifier, word_features):
-                    logging.error("\t%s"%(line,))
-        os.remove(file)
+            conn2.commit()
+
+    except mysqlconn.Error as err:
+        logging.error(err)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    cur2.close()
+    conn2.close()
             
 """                                   MAIN                                  """
 
@@ -349,7 +301,7 @@ def main():
     
     """Infinite looop."""
     while True:
-        evaluateFiles(classifier, word_features, inputDir, outputDir)
+        analizeTweets(classifier, word_features)
         sleep(0.25) # delays for 0.25 seconds
 
     logging.info('Finished')

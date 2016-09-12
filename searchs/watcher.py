@@ -49,34 +49,6 @@ def save_pid():
 def check_pid(pid):
     return int(os.popen("ps -p %d --no-headers | wc -l"%(int(pid) if len(pid) > 0 else 0,)).read().strip()) == 1
 
-#    """Check whether pid exists in the current process table.
-#    UNIX only.
-#    """
-#    if pid < 0:
-#        return False
-#    if pid == 0:
-#        # According to "man 2 kill" PID 0 refers to every process
-#        # in the process group of the calling process.
-#        # On certain systems 0 is a valid PID but we have no way
-#        # to know that in a portable fashion.
-#        raise ValueError('invalid PID 0')
-#    try:
-#        os.kill(pid, 0)
-#    except OSError as err:
-#        if err.errno == errno.ESRCH:
-#            # ESRCH == No such process
-#            return False
-#        elif err.errno == errno.EPERM:
-#            # EPERM clearly means there's a process to deny access to
-#            return True
-#        else:
-#            # According to "man 2 kill" possible error values are
-#            # (EINVAL, EPERM, ESRCH)
-#            raise
-#    else:
-#        return True
-    
-
 def get_files_to_watch(dirname):
     
     import observatoriohf
@@ -138,7 +110,19 @@ def create_py_files(searchId, searchValues, dirname):
         4 : "access_token"
     }
     
-    replace(configpyfile,{x:searchValues[idt] for idt, x in conf.items()})
+    conf = {x:searchValues[idt] for idt, x in conf.items()}
+    
+    import observatoriohf    
+    
+    conf.update({
+        'sid' : searchId,
+        'dbuser' : observatoriohf.dbuser,
+        'dbhost' : observatoriohf.dbhost,
+        'db' : observatoriohf.dbdatabase,
+        'dbpwd' : observatoriohf.dbpassword
+    })
+    
+    replace(configpyfile,conf)
 
 def launch_py(searchId, searchValues, pythonPath, dirname):
     create_py_files(searchId, searchValues, dirname) # just in case
@@ -210,12 +194,6 @@ def keep_analizer_alive(pythonPath, dirname):
         with open(pidfile, 'w') as f:
             f.write(pid)
 
-def num(s):
-    try:
-        return int(s)
-    except ValueError:
-        return float(s)
-
 def move_from_to(dir_from, dir_to):
     files = glob.glob(os.path.join(dir_from, "*"))
     filtered = [f for f in files if '.log' not in os.path.basename(f)]
@@ -234,16 +212,6 @@ def move_from_to(dir_from, dir_to):
             toFile = os.path.join(dir_to, os.path.basename(fromFile))
             os.rename(fromFile, toFile)
 
-def move_files(dirname):
-    counter = 0
-    dir_from = ''
-    for dir_files in ['input','analysis']:
-        if counter % 2 == 0:
-            dir_from = os.path.join(dirname, dir_files)
-        else:
-            move_from_to(dir_from, os.path.join(dirname, dir_files))
-        counter += 1
-        
 def maybeCreateDirs(dirnames, base='.'):
     if not isinstance(dirnames,list): dirnames = [dirnames]
     for dirname in [os.path.join(base,dn) for dn in dirnames if dn != '']:
@@ -325,9 +293,7 @@ def main():
         pyfiles = get_files_to_watch(dirname)
         keep_processes_alive(pyfiles, pythonPath, dirname)
         keep_analizer_alive(pythonPath, dirname)
-        move_files(dirname)
         time.sleep(3) # delays for 3 seconds
-#    keep_processes_alive(pyfiles, pythonPath)
     
 if __name__ == '__main__':
     main()
