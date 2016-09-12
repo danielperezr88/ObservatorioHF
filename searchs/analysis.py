@@ -243,7 +243,7 @@ def analizeTweets(classifier, word_features):
     conn = mysqlconn.Connection(**dbconfig)
 
     cur = conn.cursor()
-    fetch_unclassified = "select id, tweet, geoLat, geoLon, location from tweets where confidence = 0 limit 10000"
+    fetch_unclassified = "select id, text, geoLat, geoLon, location from tweets where confidence = 0 limit 10000"
     update_polarity = "update tweets set confidence = %s, sentiment = %s, sentimentVal = %s, geoLat = %s, geoLon = %s, geo_is_inferred = %s where id = %s"
 
     try:
