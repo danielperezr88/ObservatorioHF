@@ -256,7 +256,12 @@ def main():
         "consumer_key" : "",
         "consumer_secret" : "",
         "access_secret" : "",
-        "access_token" : ""
+        "access_token" : "",
+        "db" : "",
+        "dbhost" : "",
+        "dbuser" : "",
+        "dbpwd" : "",
+        "sid" : ""
     }
     fp = open(os.path.join(WDIR,PYDIR,'configinput.py'),'w')
     for (key, value) in configinput.items():
