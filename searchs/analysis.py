@@ -200,12 +200,14 @@ def find_features(document):
 def retrieveClassAndConfidence(classifier,feats=list()):
 
     if not bool(feats):
-        return 'unk', float(0)
+        #return 'unk', 0
+        return 0, 0
         
     probs = classifier.predict_proba([' '.join(feats)])[0]
-    result = 'neg' if sorted(range(len(probs)), key=probs.__getitem__, reverse=True)[0] is 0 else 'pos'
+    #result = 'neg' if sorted(range(len(probs)), key=probs.__getitem__, reverse=True)[0] is 0 else 'pos'
     
-    return result, (float(probs[1])*2)-1
+    #return result, int(probs[1]*255)-128
+    return int(probs[1]*255)-128, 1
     
 @memoize
 def GetGoogleLocation(location):
@@ -241,25 +243,59 @@ def analizeTweets(classifier, word_features):
                     host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
     
     conn = mysqlconn.Connection(**dbconfig)
-
     cur = conn.cursor()
-    fetch_unclassified = "select id, text, geoLat, geoLon, location from tweets where confidence = 0 limit 10000"
-    update_polarity = "update tweets set confidence = %s, sentiment = %s, sentimentVal = %s, geoLat = %s, geoLon = %s, geo_is_inferred = %s where id = %s"
-
+    
+    db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
+    
+    fetch_unclassified = "select cnt_id, geolat, geolon from cnt_extra_" + db_date_suffix + " where polarity = 0 limit 10000"
+    fetch_content = "select content from cnt_scraped_" + db_date_suffix + " where cnt_id = %s limit 1"
+    fetch_original = "select original_lat, original_lon, original_location from cnt_interactions_" + db_date_suffix + " where cnt_id = %s limit 1"
+    fetch_location = "select location from cnt_info_" + db_date_suffix + " where cnt_id = %s limit 1"
+    update_extra = "update cnt_extra_" + db_date_suffix + " set polarity = %s, geolat = %s, geolon = %s where cnt_id = %s limit 1"
+    update_extra_without_geo = "update cnt_extra_" + db_date_suffix + " set polarity = %s where cnt_id = %s limit 1"
+    update_extra_without_pol = "update cnt_extra_" + db_date_suffix + " set geolat = %s, geolon = %s where cnt_id = %s limit 1"
+    update_interactions = "update cnt_interactions_" + db_date_suffix + " set original_lat = %s, original_lon = %s where cnt_id = %s limit 1"
+    update_inferred = "update cnt_whats_inferred_" + db_date_suffix + " set geo = %s, original_geo = %s, polarity = %s where cnt_id = %s limit 1"
+    
     try:
 
-        cur.execute(fetch_unclassified)
-        conn2 = mysqlconn.Connection(**dbconfig)
-        cur2 = conn2.cursor()
-        for row in cur:
+        cur.execute(fetch_unclassified,(db_date_suffix,))
+        for cnt_id, geoLat, geoLon in [tuple(row) for row in cur]:
 
-            feats = find_features(row[1])
-            sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
-            lat, lon, geo_is_inferred = GeoLocalize(row[4]) if any([row[2] != 0, row[3] != 0]) else (row[2], row[3], 0)
+            conn.commit()
+            cur.execute(fetch_content,(cnt_id))
+            content = cur.fetchone()[0]
             
-            cur2.execute(update_polarity, (confidence, sentiment, sign(confidence), lat, lon, geo_is_inferred, row[0]))
-
-            conn2.commit()
+            conn.commit()
+            cur.execute(fetch_original,(cnt_id))
+            original_lat, original_lon, original_location = tuple([d for d in cur[0]])
+            
+            conn.commit()
+            cur.execute(fetch_location,(cnt_id))
+            location = cur.fetchone()[0]
+            
+            feats = find_features(content)
+            #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
+            polarity, pol = retrieveClassAndConfidence(classifier, feats)
+            geoLat, geoLon, geo = GeoLocalize(location) if any([geoLat != 0, geoLon != 0]) else (geoLat, geoLon, 0)
+            original_lat, original_lon, original_geo = GeoLocalize(original_location) if any([original_lat != 0, original_lon != 0]) else (original_lat, original_lon, 0)
+            
+            if geo == 1 and pol == 1:
+                conn.commit()
+                cur.execute(update_extra, (polarity, geoLat, geoLon, cnt_id))
+            elif pol == 1:
+                conn.commit()
+                cur.execute(update_extra_without_geo, (polarity, cnt_id))                
+            elif geo == 1:
+                conn.commit()
+                cur.execute(update_extra_without_pol, (geoLat, geoLon, cnt_id))                
+            
+            if original_geo == 1:
+                conn.commit()
+                cur.execute(update_interactions, (original_lat, original_lon, cnt_id))
+            
+            conn.commit()
+            cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
 
     except mysqlconn.Error as err:
         logging.error(err)
@@ -267,8 +303,6 @@ def analizeTweets(classifier, word_features):
     conn.commit()
     cur.close()
     conn.close()
-    cur2.close()
-    conn2.close()
             
 """                                   MAIN                                  """
 
