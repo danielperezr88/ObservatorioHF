@@ -259,7 +259,7 @@ def analizeTweets(classifier, word_features):
     
     try:
 
-        cur.execute(fetch_unclassified,(db_date_suffix,))
+        cur.execute(fetch_unclassified)
         for cnt_id, geoLat, geoLon in [tuple(row) for row in cur]:
 
             conn.commit()
