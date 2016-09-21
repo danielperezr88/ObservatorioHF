@@ -17,6 +17,8 @@ import re
 import pwd
 import grp
 
+from struct import unpack
+
 from google.protobuf import timestamp_pb2
 from gcloud import storage
 
@@ -61,7 +63,7 @@ def get_files_to_watch(dirname):
     cursor.execute(query)
     myList= {}
     for (id, search, active, ckey, c_sec, at_k, at_s) in cursor:
-        myList[id] = [search,active, ckey, c_sec, at_k, at_s]
+        myList[id] = [search,int(unpack('?',active)[0]), ckey, c_sec, at_k, at_s]
     
     cursor.close()
     conn.close()
