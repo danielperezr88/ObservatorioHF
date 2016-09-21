@@ -268,7 +268,7 @@ def analizeTweets(classifier, word_features):
             
             conn.commit()
             cur.execute(fetch_original,(cnt_id,))
-            original_lat, original_lon, original_location = tuple([d for d in cur.fetchall()])
+            original_lat, original_lon, original_location = cur.fetchone()
             
             conn.commit()
             cur.execute(fetch_location,(cnt_id,))
