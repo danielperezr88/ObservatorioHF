@@ -57,7 +57,7 @@ def get_files_to_watch(dirname):
                                           host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
     
     cursor = conn.cursor()
-    query = ("SELECT t1.id, t1.search, t1.active, t2.ckey, t2.consumer_secret, t2.access_token_key, t2.access_token_secret FROM `searchs` as t1  LEFT JOIN config as t2 ON t2.id= t1.config_id")
+    query = ("SELECT t1.id, t3.string, t1.active, t2.ckey, t2.consumer_secret, t2.access_token_key, t2.access_token_secret FROM searchs as t1 LEFT JOIN config as t2 ON t2.id=t1.config_id JOIN search_strings as t3 ON t1.search_string_id=t3.search_string_id")
     cursor.execute(query)
     myList= {}
     for (id, search, active, ckey, c_sec, at_k, at_s) in cursor:
