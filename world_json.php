@@ -7,10 +7,14 @@
 		exit; //hacking attempt
 	}
 	
-	$sid = GetGet('sid','');
-	$where = rawurldecode(GetGet('where',''));
+	$sid = GetGet('search_id','');
+	$searchidStr = empty($sid) ? '' : "search_id='{$sid}'";
+	$fromdate = GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
+	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));
+	$temporalStr = $sql_tools->GetTemporalStr($fromdate,$todate,GetGet("fromhour",0),GetGet("tohour",24));
+	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
 	
-	$latLonInfo = $sql_tools->GetLatLon($sid, $where);
+	$latLonInfo = $sql_tools->GetLatLon($fromdate, $todate, array($searchidStr,$temporalStr,$sentimentStr));
 	
 	$maxLatLonInfo = count($latLonInfo);
 	
@@ -27,7 +31,7 @@
 		//print(count ($latLon));
 		for ($i=0; $i< $latLon["total"]; $i++) {
 		?>
-		{ "type": "Feature", "geometry": { "type": "Point", "coordinates": [ <?php echo $latLon["geoLon"].",".$latLon["geoLat"] ?> ] } }
+		{ "type": "Feature", "geometry": { "type": "Point", "coordinates": [ <?php echo $latLon["geolon"].",".$latLon["geolat"] ?> ] } }
 		<?php 
 			if (!($counterA == $maxLatLonInfo-1  && $i == $latLon["total"]-1) ) echo ",";
 		}

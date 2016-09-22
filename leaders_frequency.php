@@ -25,11 +25,8 @@
 	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));//$week_end;
 	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, GetGet("fromhour",0),GetGet("tohour",24));
 	
-	$whereStr =  $sql_tools->CreateWhere(array($temporalStr,$sentimentStr,$searchidStr));
-	
-	$ids = array_column($returned,'id');
-	$values = $sql_tools->GetLeaders($ids, $whereStr);
-	$tweets = $sql_tools->CountTweets($ids, explode(",","'" . implode("','",array_column($values,"retweetedFrom")) . "'"), $whereStr);
+	$values = $sql_tools->GetLeaders($fromdate, $todate, array($temporalStr,$sentimentStr,$searchidStr));
+	$tweets = $sql_tools->CountContents(explode(",","'" . implode("','",array_column($values,"original_from")) . "'"), $fromdate, $todate, array($temporalStr,$sentimentStr,$searchidStr));
 	
 	$tweetsDict = array();
 	foreach ($tweets as $tweet)
@@ -77,9 +74,9 @@
 	  $provider = array();
 	  foreach ($values as $value)
 		$provider[] = "{" .
-		"\"leader\":\"{$value['retweetedFrom']}\"," .
+		"\"leader\":\"{$value['original_from']}\"," .
 		"\"retweets\":\"{$value['ctF']}\"," .
-		"\"tweets\":\"" . (array_key_exists($value["retweetedFrom"], $tweetsDict) ? $tweetsDict[$value["retweetedFrom"]] : "0") . "\"," .
+		"\"tweets\":\"" . (array_key_exists($value["original_from"], $tweetsDict) ? $tweetsDict[$value["original_from"]] : "0") . "\"," .
 		"}";
 	  echo implode(",\n",$provider);
   ?>

@@ -14,12 +14,20 @@
 		continue; //hacking attempt
 	}
 	
-	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
-	$temporalStr = $sql_tools->GetTemporalStr(GetGet("fromdate", ""), GetGet("todate", ""), GetGet("fromhour", ""), GetGet("tohour", ""));
-	$where = $sql_tools->CreateWhere(array("lang = 'es'",$sentimentStr,$temporalStr));
+	$fromdateStr = "fromdate=".GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
+	$todateStr = "todate=".GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));
+	$fromhourStr = "fromhour=".GetGet("fromhour",0);
+	$tohourStr = "tohour=".GetGet("tohour",24);
 	
-	$searchs = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
-	$sid = GetGet("sid", (count($searchs) > 0)? current($searchs)['id'] : "");
+	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
+	$sid = GetGet("sid", (count($returned) > 0)? current($returned)['id'] : "");
+	$searchidStr = empty($sid) ? '' : "search_id='{$sid}'";
+	
+	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));	
+	
+	$attributes = implode("&",array_filter(array($searchidStr,$fromdateStr,$todateStr,$fromhourStr,$tohourStr,$sentimentStr,$searchidStr), function($val){
+		return !empty($val);
+	}));
 	
 	if(empty($sid)){
 		echo('<h3 style="margin-top:0;padding-left:1em;">No matching results found...</h3>');
@@ -55,7 +63,7 @@
     // Create a heatmap layer based on GeoJSON content
     var heatmapLayer = new ol.layer.Heatmap({
         source: new ol.source.GeoJSON({
-            url: 'world_json.php?sid=<?php echo $sid;?>&where=<?php echo rawurlencode($where);?>',
+            url: 'world_json.php?<?php echo $attributes;?>',
             projection: 'EPSG:3857'
         }),
         opacity: 0.5,

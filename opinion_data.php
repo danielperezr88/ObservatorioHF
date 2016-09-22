@@ -17,10 +17,13 @@
 	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
 	
 	$sentiment = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
-	$temporalStr = $sql_tools->GetTemporalStr(GetGet("fromdate", ""), GetGet("todate", ""), GetGet("fromhour", ""), GetGet("tohour", ""));
-	$where = $sql_tools->CreateWhere(array($sentiment,$temporalStr));
 	
-	$values = $sql_tools->GetTotal(array_column($returned,'id'),$where);
+	$fromdate = GetGet("fromdate", "");
+	$todate = GetGet("todate", "");
+	
+	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, GetGet("fromhour", ""), GetGet("tohour", ""));
+	
+	$values = $sql_tools->GetTotal(array_column($returned,'id'),$fromdate,$todate,array($sentiment,$temporalStr));
 	
 	$sentimentArray = array();
 	foreach ($values as $value) {

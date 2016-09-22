@@ -25,9 +25,7 @@
 	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));//$week_end;
 	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, 0, 24);
 	
-	$whereStr =  $sql_tools->CreateWhere(array($temporalStr,$sentimentStr,$searchidStr));
-	
-	$values = $sql_tools->GetFrecuents(array_column($returned,'id'), $whereStr);
+	$values = $sql_tools->GetFrecuents(array_column($returned,'id'), array($temporalStr,$sentimentStr,$searchidStr));
 	
 	$concepts = array();
 	foreach($values as $value)

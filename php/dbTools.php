@@ -22,7 +22,7 @@ if(!class_exists("sql_tools"))
     
     function GetTweeterAccount($dbUserId, $tweeterId)
     {
-      return self::GetValuesFromQuery("SELECT * FROM config Where user_id =".$dbUserId." AND id=".$tweeterId);
+      return self::GetValuesFromQuery("SELECT * FROM config Where user_id =".$dbUserId." AND id=".$tweeterId." limit 1");
     }
     
     function GetTweeterAccountWhere($dbUserId, $where)
@@ -108,7 +108,7 @@ if(!class_exists("sql_tools"))
     
     function GetSearchs($dbProjectId)
     {
-      return self::GetValuesFromQuery("SELECT * FROM searchs Where project_id =".$dbProjectId);
+      return self::GetValuesFromQuery("SELECT t1.id as id, t1.name as name, t1.active as active, t2.string as search FROM `searchs` as t1 JOIN search_strings as t2 ON t1.search_string_id=t2.search_string_id where t1.project_id=".$dbProjectId);
     }
     
     function GetProjectSearchsInfo($dbProjectId)
@@ -123,7 +123,7 @@ if(!class_exists("sql_tools"))
     
     function GetSearch($userId, $dbSearchId)
     {
-      $returned = self::GetValuesFromQuery("SELECT * FROM searchs Where id = ".$dbSearchId." AND `project_id` in (SELECT id from projects WHERE user_id=".$userId.")");
+      $returned = self::GetValuesFromQuery("SELECT t1.project_id as project_id, t1.name as name, t3.string as search FROM searchs as t1 RIGHT JOIN projects as t2 on t1.project_id=t2.id JOIN search_strings as t3 on t1.search_string_id=t3.search_string_id Where t1.id = ".$dbSearchId." AND t2.user_id=".$userId." limit 1");
       if (is_array($returned))
       {
         return $returned[0];
@@ -156,8 +156,12 @@ if(!class_exists("sql_tools"))
       }
       $active = $active? 1 : 0;
       $searchStr = mysql_real_escape_string ($searchStr) ;
-      // TODO: Create an instant query to obtain the first available config and insert it into the row
-      $query = "INSERT INTO searchs (project_id,name, search, config_id, active) VALUES('".$pid."', '".$searchName."', '".$searchStr."', ".$configId.", ".$active.");";
+	  $addSearchStrQuery = "INSERT INTO search_strings (string) VALUES ('".$searchStr."')";
+	  $findLastSearchStrIdQuery = "SELECT search_string_id FROM search_strings ORDER BY search_string_id DESC LIMIT 1";
+	  self::ExecuteQuery($addSearchStrQuery);
+	  $id = self::GetValuesFromQuery($findLastSearchStrIdQuery);
+	  $id = (is_array($id)) ? $id[0] : $id;
+      $query = "INSERT INTO searchs (project_id,name, search_string_id, config_id, active) VALUES('".$pid."', '".$searchName."', '".$id."', ".$configId.", ".$active.");";
       //print($query );
       return self::ExecuteQuery($query);
     }
@@ -172,21 +176,21 @@ if(!class_exists("sql_tools"))
         {
           //print_r($configId[0]["id"]);
           // TODO: Create an instant query to obtain the first available config and insert it into the row
-          return self::ExecuteQuery("UPDATE searchs set active=".$activeValue.", config_id=".$configId[0]["id"]." where id=".$searchId.";");
+          return self::ExecuteQuery("UPDATE searchs set active=".$activeValue.", config_id=".$configId[0]["id"]." where id=".$searchId." LIMIT 1;");
         }
         //else hacking attempt?
       }
       else
       {
-        return self::ExecuteQuery("UPDATE searchs set active=".$activeValue.", config_id=0 where id=".$searchId.";");
+        return self::ExecuteQuery("UPDATE searchs set active=".$activeValue.", config_id=0 where id=".$searchId." LIMIT 1;");
       }
     }
     
     function GetSearchsActive($dbProjectId, $active = 1, $id = "")
     {
-      $query = "SELECT * FROM searchs Where project_id =".$dbProjectId." and active = ".$active;
+      $query = "SELECT id, name FROM searchs Where project_id =".$dbProjectId." and active = ".$active;
       if ($id != "")
-        $query .= " and id = ".$id;
+        $query .= " and id = ".$id." LIMIT 1";
       //print($query);
 	  //error_log($query);
       return self::GetValuesFromQuery($query, true);
@@ -196,15 +200,28 @@ if(!class_exists("sql_tools"))
     {
       if (is_array($search_ids))
         $search_ids = implode(',', $search_ids);
+	
+	  $month_from = date('Y_m', strtotime("-".$delay_minutes." minutes -".$seconds_window." seconds"));
+      $month_to = date('Y_m', strtotime("-".$delay_minutes." minutes"));
       
-      $query = "SELECT search_id,SUM(sentimentVal) as value, COUNT(sentimentVal) FROM `tweets` where search_id IN (".$search_ids .") "
-        ."AND saved > (now() - INTERVAL ".$seconds_window." SECOND - INTERVAL ".$delay_minutes." MINUTE) "
-        ."AND saved < (now() - INTERVAL ".$delay_minutes." MINUTE) group by search_id";
-      //print($query);
-      return self::GetValuesFromQuery($query);
+	  if (strcmp($month_to,$month_from) == 0) {
+        $query = "SELECT t2.search_id, SUM(CAST(t1.polarity>0 AS SIGNED INTEGER)*2-1) AS value, COUNT(t1.polarity) AS volume "
+	      ."FROM cnt_extra_".$month_from." AS t1 JOIN cnt_info_".$month_from." AS t2 ON t1.cnt_id = t2.cnt_id WHERE t2.search_id IN (".$search_ids .") "
+          ."AND t1.created_at > (now() - INTERVAL ".$seconds_window." SECOND - INTERVAL ".$delay_minutes." MINUTE) "
+          ."AND t1.created_at < (now() - INTERVAL ".$delay_minutes." MINUTE) group by t2.search_id";
+        return self::GetValuesFromQuery($query);
+	  } else {
+	    $query1 = "SELECT t2.search_id, SUM(CAST(t1.polarity>0 AS SIGNED INTEGER)*2-1) AS value, COUNT(t1.polarity) AS volume "
+	      ."FROM cnt_extra_".$month_from." AS t1 JOIN cnt_info_".$month_from." AS t2 ON t1.cnt_id = t2.cnt_id WHERE t2.search_id IN (".$search_ids .") "
+          ."AND t1.created_at > (now() - INTERVAL ".$seconds_window." SECOND - INTERVAL ".$delay_minutes." MINUTE) group by t2.search_id";
+		$query2 = "SELECT t2.search_id, SUM(CAST(t1.polarity>0 AS SIGNED INTEGER)*2-1) AS value, COUNT(t1.polarity) AS volume "
+	      ."FROM cnt_extra_".$month_to." AS t1 JOIN cnt_info_".$month_to." AS t2 ON t1.cnt_id = t2.cnt_id WHERE t2.search_id IN (".$search_ids .") "
+          ."AND t1.created_at < (now() - INTERVAL ".$delay_minutes." MINUTE) group by t2.search_id";
+		return array_merge(self::GetValuesFromQuery($query1), self::GetValuesFromQuery($query2));
+	  }
     }
     
-    function GetInstantValues($search_ids,$where = "")
+    /*function GetInstantValues($search_ids,$where = "")
     {
 	  if (!is_array($search_ids)) $search_ids = array($search_ids);
       //$query = "SELECT `search_id`,`created_at`, `sentiment`, `confidence` FROM `tweets` ";
@@ -219,201 +236,316 @@ if(!class_exists("sql_tools"))
           if(!empty($result)) $toReturn[$search_id] = $result;
       }
       return $toReturn;
-    }
+    }*/
     
-    function GetAverageValues($search_ids, $intervalType, $where = "", $catType= "subsctract")
+    function GetAverageValues($search_ids, $intervalType, $fromDate = "", $toDate = "", $where_arr = array(), $catType= "subtract")
     {
-	  if (!is_array($search_ids)) $search_ids = array($search_ids);
-		
-      if ($catType == "add")
-        $query = "SELECT `search_id`,date(`created_at`) as `created_at`, `confidence`, COUNT(*) as count FROM `tweets` ";
+	  if (!is_array($search_ids))
+		$search_ids = array($search_ids);
+	  $search_ids = implode(',', $search_ids);
+	  
+	  $fromStr = " FROM cnt_extra_%s as t1 JOIN cnt_info_%s as t2 on t1.cnt_id = t2.cnt_id";
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = [];
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	  
+	  if ($catType == "add")
+        $query = "SELECT t2.search_id AS search_id, date(t1.created_at) AS created_at, COUNT(t1.polarity) as count";
       else
-        $query = "SELECT `search_id`,date(`created_at`) as `created_at`, SUM(`confidence`)/COUNT(`confidence`) as `confidence`, SUM(`sentimentVal`) as count FROM `tweets` ";
+        $query = "SELECT t2.search_id AS search_id, date(t1.created_at) AS created_at, SUM(CAST(t1.polarity>0 AS SIGNED INTEGER)*2-1) as count";
   
       $finalQuery = "";
       if ($intervalType == "hour")
       {
-        $finalQuery .= " GROUP BY date( created_at ), hour( created_at ), `search_id`";
+        $finalQuery .= " GROUP BY DATE(t1.created_at), HOUR(t1.created_at), t2.search_id";
       }
       else if ($intervalType == "day")
       {
-        $finalQuery .= " GROUP BY date( created_at ),`search_id`";
+        $finalQuery .= " GROUP BY DATE(t1.created_at), t2.search_id";
       }
       else if ($intervalType == "week")
       {
-        $finalQuery .= " GROUP BY CONCAT(YEAR(created_at), '/', WEEK(created_at)), `search_id`";
+        $finalQuery .= " GROUP BY CONCAT(YEAR(t1.created_at), '/', WEEK(t1.created_at)), t2.search_id";
       }
       else if ($intervalType == "month")
       {
-        $finalQuery .= " GROUP BY CONCAT(YEAR(created_at), '/', MONTH(created_at), `search_id`";
+        $finalQuery .= " GROUP BY CONCAT(YEAR(t1.created_at), '/', MONTH(t1.created_at), t2.search_id";
       }
-      $finalQuery .= " order by `search_id`,`created_at`";
+      $finalQuery .= " ORDER BY t1.created_at, t2.search_id";
+	  
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t2.search_id IN (".$search_ids.")"));
       
       $toReturn = array();
-      foreach($search_ids as $search_id)
-      {
-		  $result = self::GetValuesFromQueryStr($search_id,$query, $where, $finalQuery);
-          if(!empty($result)) $toReturn[$search_id] = $result;
-      }
+      foreach($dates as $date){
+		$res = self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery);
+		foreach($r in $res){
+		  if(!array_key_exists($r['search_id'])) $toReturn[$r['search_id']] = array();
+	      $toReturn[$r['search_id']] = array_merge($res,$toReturn[$r['search_id']]);
+		}
+	  }
       
       return $toReturn;
     }
     
-    function GetResearch($search_ids, $where = "")
+    function GetResearch($search_ids, $fromDate, $toDate, $searchVars, $where_arr = array())
     {
-      $toReturn = array();
+	  if (!is_array($search_ids))
+		$search_ids = array($search_ids);
+	  $search_ids = implode(',', $search_ids);
+	  
+	  $toSearch = implode("%' AND t3.content LIKE '%",explode(',',$searchVars));
+	  $toSearch = !empty($toSearch) ? " t3.content LIKE '%".$toSearch."%'" : $toSearch;
+	  
+	  $fromStr = " FROM cnt_extra_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+	  $extraFrom = " JOIN cnt_scraped_%s AS t3 ON t1.cnt_id = t3.cnt_id";
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
       
-      $query = "SELECT `search_id`, DATE_FORMAT(`created_at`, '%Y-%m-%d %H:%i:00') as `created_norm`,`created_at`, `sentimentVal`, sum(`sentimentVal`) as count FROM `tweets` ";
+      $query = "SELECT t2.search_id AS search_id, DATE_FORMAT(t1.created_at, '%Y-%m-%d %H:%i:00') as created_norm, SUM(CAST(t1.polarity>0 AS SIGNED INTEGER)*2-1) as count";
+	  
+	  $whereQuery = " WHERE " . self::CreateWhere(!empty($toSearch) ? $where_arr + array($toSearch,"t2.search_id IN (".$search_ids.")") : $where_arr + array("t2.search_id IN (".$search_ids.")"));
+	  
+      $finalQuery = " GROUP BY t2.search_id, DATE(t1.created_at ) ORDER BY t1.created_at ASC"; // ,HOUR(`created_at` ), MINUTE(`created_at` )
       
-      $finalQuery = " GROUP BY `search_id`, DATE(`created_at` ) ORDER BY `created_at` ASC"; // ,HOUR(`created_at` ), MINUTE(`created_at` )
-      
-      if (is_array($search_ids))
-        $search_ids = implode(',', $search_ids);
-        
-      $whereQuery = " where search_id IN (".$search_ids .")";
-      if ($where != "") $whereQuery .= " and ".$where;
-      $totalQuery = $query.$whereQuery.$finalQuery;
-	  //error_log($totalQuery);
-      $toReturn = self::GetValuesFromQuery($totalQuery);
+	  $toReturn = array();
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . (!empty($toSearch) ? sprintf($extraFrom,$date) : "") . $whereQuery . $finalQuery));
       return $toReturn;
     }
     
-    function GetTotal($search_ids,$where = "")
+    function GetTotal($search_ids,$fromDate, $toDate, $where_arr = array())
     {
-      $query = "SELECT `search_id`, `sentiment`, count(`sentiment`) as count FROM `tweets` ";
-      
-      $finalQuery = " GROUP BY `search_id`, `sentiment`";
+	  if (!is_array($search_ids))
+		$search_ids = array($search_ids);
+	  $search_ids = implode(',', $search_ids);
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	  
+      $query = "SELECT t2.search_id AS search_id, IF(t1.polarity>38,'pos',IF(t1.polarity<-38,'neg','unk')) AS sentiment, COUNT(t1.polarity) AS count";
+	  $fromStr = " FROM cnt_extra_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t2.search_id IN (".$search_ids.")"));
+      $finalQuery = " GROUP BY t2.search_id`, `sentiment`";
       
       $toReturn = array();
-      if (is_array($search_ids))
-      {
-        foreach($search_ids as $search_id)
-        {
-          $toReturn[$search_id] = self::GetValuesFromQueryStr($search_id,$query, $where, $finalQuery);
-        }
-      }
-      else
-      {
-        $toReturn[$search_ids] = self::GetValuesFromQueryStr($search_ids,$query, $where, $finalQuery);
-      }
+      foreach($dates as $date){
+		$res = self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery);
+		foreach($r in $res){
+		  if(!array_key_exists($r['search_id'])) $toReturn[$r['search_id']] = array();
+	      $toReturn[$r['search_id']] = array_merge($toReturn[$r['search_id']],$res);
+		}
+	  }
+	  
+	  return $toReturn;
+	  
+    }
+    
+    function GetOriginalLatLon($leaders, $fromDate, $toDate, $where_arr = array())
+    {
+      if (!is_array($leaders))
+		$leaders = array($leaders);
+      $leaders = implode(',', $leaders);
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+      
+	  $query = "SELECT COUNT(sentiment) as total, t1.original_lat AS original_lat, t1.original_lon AS original_lon, IF(t2.polarity>38,'pos',IF(t2.polarity<-38,'neg','unk')) as sentiment";
+	  $fromStr = " FROM cnt_interactions_%s AS t1 JOIN cnt_extra_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+      $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t1.original_from IN (".$leaders.")","t1.original_lat <> 0","t1.original_lon <> 0"));
+      $finalQuery = " GROUP BY t1.original_lat, t1.original_lon";
+      
+      $toReturn = array();
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery));
+	  
+	  return $toReturn;
+	  
+    }
+    
+    function GetLatLon($fromDate, $toDate, $where_arr = array())
+    {
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	  
+	  $query = "SELECT COUNT(t1.geolat) as total, t1.geolat, t1.geolon, IF(t1.polarity>38,'pos',IF(t1.polarity<-38,'neg','unk')) as sentiment";
+	  $fromStr = " FROM cnt_extra_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t1.geolat <> 0"));
+      $finalQuery = " GROUP BY t1.geolat, t1.geolon";
+      
+      $toReturn = array();
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery));
+	  
+	  return $toReturn;      
+	  
+    }
+    
+    function CountContents($names, $fromDate, $toDate, $where_arr = array())
+    {
+      if (!is_array($names))
+		$names = array($names);
+      $names = implode(',', $names);
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	
+	  $query = "SELECT t1.user_name as name, count(t1.user_name) as ct, IF(t2.polarity>38,'pos',IF(t2.polarity<-38,'neg','unk')) as sentiment";
+	  $fromStr = " FROM cnt_info_%s AS t1 JOIN cnt_extra_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t1.user_name IN (".$names.")"));
+      $finalQuery = " GROUP BY t1.user_name";
+      
+      $toReturn = array();
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery));
+      
       return $toReturn;
+	  
     }
     
-    function GetRetweetedLatLon($leaders, $whereStr = "")
+    function GetLeaders($fromDate, $toDate, $where_arr = array())
     {
-      $query = "SELECT COUNT( `sentiment`) as total,`retweetedLat`,`retweetedLon` FROM `tweets` ";
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	  
+      $query = "SELECT t1.original_from, count(t1.original_from) as ctF, IF(t3.polarity>38,'pos',IF(t3.polarity<-38,'neg','unk')) as sentiment";
+	  $fromStr =  " FROM cnt_interactions_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id JOIN cnt_extra_%s AS t3 ON t1.cnt_id = t3.cnt_id";
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t1.original_from <> ''"));
+      $finalQuery = " GROUP BY t1.original_from ORDER BY ctF DESC limit 25";
       
-      $whereSearch = "";
-      $isFirst = true;
       $toReturn = array();
-      if (is_array($leaders))
-        $leaders = implode(',', $leaders);
-
-      $finalQuery = " group by `retweetedLat`,`retweetedLon`";
-      
-      $whereSearch = " retweetedFrom IN (".$leaders .")";
-      $whereQuery = " where (".$whereSearch.") AND `retweetedLat` <> 0 AND `retweetedLon` <> 0 ";
-      if ($whereStr != "") $whereQuery .= " and ".$whereStr;
-      $totalQuery = $query.$whereQuery.$finalQuery;
-      //print($totalQuery );
-      return self::GetValuesFromQuery($totalQuery);
-    }
-    
-    function GetLatLon($search_ids, $whereStr = "")
-    {
-	  if(!is_array($search_ids)) $search_ids = array($search_ids);
-		
-      $query = "SELECT COUNT( `sentiment`) as total,`geoLat`,`geoLon` FROM `tweets` ";
-      $finalQuery = " group by `geoLat`,`geoLon`";
-      
-	  $filters = array("`geoLat` <> 0","search_id IN (". implode(',', $search_ids) .")");
-	  if ($whereStr != "") $filters[] = $whereStr;
-      
-      return self::GetValuesFromQuery($query . ' WHERE ' . implode(' AND ',$filters) . $finalQuery);
-      
-      //return $toReturn;
-    }
-    
-    function CountTweets($search_ids, $names, $where = "")
-    {
-      $toReturn = array();
-      
-      $query = "SELECT `name`, count(`name`) as ct FROM `tweets` ";
-      $finalQuery = " GROUP BY `name`";
-      
-      
-      if (is_array($search_ids))
-        $search_ids = implode(',', $search_ids);
-        
-      if (is_array($names))
-        $names = implode(',', $names);
-      
-      $whereQuery = " where `name` IN (".$names.") AND search_id IN (".$search_ids .")";
-      
-      if ($where != "") $whereQuery .= " and ".$where;
-      $totalQuery = $query.$whereQuery.$finalQuery;
-      //print($totalQuery);
-      $toReturn = self::GetValuesFromQuery($totalQuery);
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date,$date) . $whereQuery . $finalQuery));
+	  
       return $toReturn;
+	  
     }
     
-    function GetLeaders($search_ids, $where = "")
+    function GetCategories($search_ids, $fromDate = "", $toDate = "", $where_arr = array())
     {
-      $toReturn = array();
-      
-      //$query = "SELECT `name`, count(`name`) as ct, `retweetedFrom`, count(`retweetedFrom`) as ctF FROM `tweets` ";
-      $query = "SELECT `retweetedFrom`, count(`retweetedFrom`) as ctF FROM `tweets` ";
-  
-      //$finalQuery = " GROUP BY `name` ORDER BY ct DESC limit 25";
-      $finalQuery = " GROUP BY `retweetedFrom` ORDER BY ctF DESC limit 25";
-      
-      if (is_array($search_ids))
-        $search_ids = implode(',', $search_ids);
-      
-      $whereQuery = " where search_id IN (".$search_ids .") and `retweetedFrom` <> '' ";
-      if ($where != "") $whereQuery .= " and ".$where;
-      $totalQuery = $query.$whereQuery.$finalQuery;
-      //print($totalQuery);
-      $toReturn = self::GetValuesFromQuery($totalQuery);
+	  if (!is_array($search_ids))
+		$search_ids = array($search_ids);
+	  $search_ids = implode(',', $search_ids);
+	  
+	  $month_from = intval((new DateTime($fromDate))->format('m'));
+      $month_to = intval((new DateTime($toDate))->format('m'));
+	  
+	  $year_from = intval((new DateTime($fromDate))->format('Y'));
+      $year_to = intval((new DateTime($toDate))->format('Y'));
+	  
+	  $dates = array();
+	  foreach(range($year_from,$year_to) as $y){
+	    foreach(range(($y == $year_from) ? $month_from : 1,($y == $year_to) ? $month_to : 12) as $m){
+	      $dates[] = sprintf("%04d_%02d",$y,$m);
+	    }
+	  }
+	  
+      $query = "SELECT distinct(IF(t1.polarity>30,'pos',IF(t1.polarity<-30,'neg','unk')))";
+	  $fromStr = " FROM cnt_extra_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id";
+      $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t2.search_id IN (".$search_ids .")"));
+	  $finalQuery = "";
+	  
+	  $toReturn = array();
+      foreach($dates as $date)
+		$toReturn = array_merge($toReturn,self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery));
+	  
       return $toReturn;
-    }
+	  
+	}
     
-    function GetCategories($search_ids,$where = "")
+    function GetFrecuents($search_ids,$where_arr = array())
     {
-      $query = "SELECT distinct(sentiment) FROM `tweets` ";
-      
-      if (is_array($search_ids)){
-        $s_ids = implode(',', $search_ids);
-        unset($search_ids);
-        $search_ids = $s_ids;
-      }
-      $whereQuery = " where search_id IN (".$search_ids .")";
-      if ($where != "") $whereQuery .= " and ".$where;
-      $totalQuery = $query.$whereQuery;
-      return self::GetValuesFromQuery($totalQuery);
+	  if (!is_array($search_ids))
+		$search_ids = array($search_ids);
+	  $search_ids = implode(',', $search_ids);
+	  
+      $query = "SELECT concepts, urls, hashtags";
+	  $fromStr = " FROM frecuents";
+	  $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("search_id IN (".$search_ids .")"));
+      $finalQuery = "";
+	  
+      return self::GetValuesFromQuery($query . $fromStr . $whereQuery . $finalQuery);
+	  
     }
     
-    function GetFrecuents($search_ids,$where = "")
-    {
-      $query = "SELECT * FROM `frecuents` ";
-      
-      if (is_array($search_ids))
-        $search_ids = implode(',', $search_ids);
-        
-      $whereQuery = " where search_id IN (".$search_ids .")";
-      if ($where != "") $whereQuery .= " and ".$where;
-      $totalQuery = $query.$whereQuery;//error_log(serialize($totalQuery));
-      return self::GetValuesFromQuery($totalQuery);
-    }
-    
-    function GetValuesFromQueryStr($search_id,$query, $where, $finalQuery)
+    /*function GetValuesFromQueryStr($search_id,$query, $where, $finalQuery)
     {
       $whereQuery = " where search_id = ".$search_id;
       if ($where != "") $whereQuery .= " and ".$where;
       $totalQuery = $query.$whereQuery.$finalQuery;
       //print_r($totalQuery);
       return self::GetValuesFromQuery($totalQuery);
-    }
+    }*/
     
     function GetValuesFromQuery($query,$idd = false)
     {
@@ -454,10 +586,10 @@ if(!class_exists("sql_tools"))
 		return (empty($sentiment) || $sentiment == '-all-')? "" : "sentiment='" . $sentiment . "'";
     }
     
-    function GetTemporalGetStr($fromdate, $todate, $fromhour, $tohour)
+    /*function GetTemporalGetStr($fromdate, $todate, $fromhour, $tohour)
     {
       return 'fromdate='.$fromdate.'&todate='.$todate.'&fromhour='.$fromhour.'&tohour='.$tohour.'';
-    }
+    }*/
     
     function ArchiveProject($projectId, $archiverId)
     {
@@ -468,24 +600,24 @@ if(!class_exists("sql_tools"))
       if ($projInfo["active"] > 0)
         return "Any search is still active in the project, so the project cannot be archived.";
       
-			$searchs = self::GetSearchs($projectId);
-			
-			$search_ids = array();
-			foreach($searchs as $search)
-			{
-				$search_ids[] = $search["id"];
-			}
-			
-			// Delete first the search, to avoid it gets started again. TODO: think in other way to lock (while the process is running)
+	  $searchs = self::GetSearchs($projectId);
+	
+	  $search_ids = array();
+	  foreach($searchs as $search)
+	  {
+	    $search_ids[] = $search["id"];
+	  }
+	
+	  // Delete first the search, to avoid it gets started again. TODO: think in other way to lock (while the process is running)
       $returned = self::ArchiveProjects(array($projectId), $archiverId);
       if ($returned != 1)
       	return $returned;
       	
-     	if ($search_ids != array())
-     	{
-     		$returned = self::ArchiveSearchs($search_ids, $archiverId);
-     	}
-      return 1;
+       if ($search_ids != array())
+       {
+         $returned = self::ArchiveSearchs($search_ids, $archiverId);
+       }
+       return 1;
     }
     
     function ArchiveSearch($searchId, $archiverId)
@@ -523,8 +655,8 @@ if(!class_exists("sql_tools"))
     	if (is_array($search_ids))
         $search_ids = implode(',', $search_ids);
         
-      $query = "INSERT INTO `arch_searchs` (`archiver_id`, `id`, `project_id`, `config_id`, `name`, `search`, `stored_id`, `active`)
-        SELECT ".$archiverId.",`id`, `project_id`, `config_id`, `name`, `search`, `stored_id`, `active`
+      $query = "INSERT INTO `arch_searchs` (`archiver_id`, `id`, `project_id`, `config_id`, `name`, `search_string_id`, `active`)
+        SELECT ".$archiverId.",`id`, `project_id`, `config_id`, `name`, `search_string_id`, `active`
         FROM `searchs` where `id` in (".$search_ids.")";
       
       $returned = self::ExecuteQuery($query);
@@ -533,7 +665,7 @@ if(!class_exists("sql_tools"))
       	self::RemoveSearchs($search_ids);
       	
       	self::ArchiveFrecuents($search_ids, $archiverId);
-      	self::ArchiveTweets($search_ids, $archiverId);
+      	//self::ArchiveTweets($search_ids, $archiverId);
       	return 1;
       }
       else
@@ -556,7 +688,7 @@ if(!class_exists("sql_tools"))
       return 1;
     }
     
-    function ArchiveTweets($search_ids, $archiverId)
+    /*function ArchiveTweets($search_ids, $archiverId)
     {
     	if (is_array($search_ids))
         $search_ids = implode(',', $search_ids);
@@ -570,7 +702,7 @@ if(!class_exists("sql_tools"))
       	self::RemoveTweets($search_ids);
       
       return 1;
-    }
+    }*/
     
     function RemoveProjects($project_ids)
     {
@@ -602,7 +734,7 @@ if(!class_exists("sql_tools"))
     	return self::ExecuteQuery($query);
     }
     
-    function RemoveTweets($search_ids)
+    /*function RemoveTweets($search_ids)
     {
     	if (is_array($search_ids))
         $search_ids = implode(',', $search_ids);
@@ -610,7 +742,7 @@ if(!class_exists("sql_tools"))
     	$query = "DELETE FROM `tweets` where `search_id` in (".$search_ids.")";
     	
     	return self::ExecuteQuery($query);
-    }
+    }*/
   }
 }
 ?>

@@ -21,13 +21,8 @@
 	$fromdate = GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
 	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));//$week_end;
 	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, GetGet("fromhour",0),GetGet("tohour",24));
-	
-	$toSearch = implode("%' AND text LIKE '%",explode(',',GetGet("searchVars", "")));
-	($toSearch != "") ? $toSearch = "text LIKE '%".$toSearch."%'" : $toSearch = "";
-	
-	$where =  $sql_tools->CreateWhere(array($toSearch,$temporalStr,$sentimentStr));
-	
-	$values = $sql_tools->GetResearch(array_column($returned,'id'), $where);
+		
+	$values = $sql_tools->GetResearch(array_column($returned,'id'), $fromdate, $todate, GetGet("searchVars", ""),array($temporalStr,$sentimentStr));
 
 	loadDependencies(array(
 	  "scripts"     =>  array(

@@ -14,7 +14,7 @@
 		continue; //hacking attempt
 	}
 	
-	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
+	//$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
 	
 	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
 	
@@ -25,9 +25,7 @@
 	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));//$week_end;
 	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, GetGet("fromhour",0),GetGet("tohour",24));
 	
-	$whereStr =  $sql_tools->CreateWhere(array($temporalStr,$sentimentStr,$searchidStr));
-	
-	$values = $sql_tools->GetLeaders(array_column($returned,'id'), $whereStr);
+	$values = $sql_tools->GetLeaders($fromdate, $todate, array($temporalStr,$sentimentStr,$searchidStr));
 	
 	if (count($values) == 0){
 		echo('<h3 style="margin-top:0;padding-left:1em;">No matching results found...</h3>');
@@ -98,7 +96,7 @@
       <?php 
 		  $words = array();
 		  foreach ($values as $value)
-			$words[] = "{text:\"{$value['retweetedFrom']}\",size:{$value['fontSize']}}";
+			$words[] = "{text:\"{$value['original_from']}\",size:{$value['fontSize']}}";
 		  echo implode(",\n",$words);
 	  ?>
         ])

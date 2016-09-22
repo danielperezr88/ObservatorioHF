@@ -14,8 +14,8 @@
 		continue; //hacking attempt
 	}
 	
-	$active = GetGet("active", 1);
-	$pid = GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']);
+	$activeStr = "active=".GetGet("active", 1);
+	$pidStr = "pid=".GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']);
 	
 	$returned = $sql_tools->GetSearchsActive($pid, $active);
 	
@@ -24,11 +24,14 @@
 	$sid = GetGet("sid", (count($returned) > 0)? current($returned)['id'] : "");
 	$searchidStr = empty($sid) ? '' : "search_id='{$sid}'";
 	
-	$fromdate = GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
-	$todate = GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));//$week_end;
-	$temporalStr = $sql_tools->GetTemporalStr($fromdate, $todate, GetGet("fromhour",0),GetGet("tohour",24));
+	$fromdateStr = "fromdate=".GetGet("fromdate",date('d-m-Y', strtotime(date('d-m-Y')." -30 days")));
+	$todateStr = "todate=".GetGet("todate",date('d-m-Y', strtotime(date('d-m-Y')." 0 days")));
+	$fromhourStr = "fromhour=".GetGet("fromhour",0);
+	$tohourStr = "tohour=".GetGet("tohour",24);
 	
-	$whereStr =  $sql_tools->CreateWhere(array($temporalStr,$sentimentStr,$searchidStr));
+	$attributes = implode("&",array_filter(array($pidStr,$activeStr,$fromdateStr,$todateStr,$fromhourStr,$tohourStr,$sentimentStr,$searchidStr), function($val){
+		return !empty($val);
+	}));
 
 	loadDependencies(array(
 	  "scripts"     =>  array(
@@ -59,7 +62,7 @@
     // Create a heatmap layer based on GeoJSON content
     var heatmapLayer = new ol.layer.Heatmap({
         source: new ol.source.GeoJSON({
-            url: 'leaders_world_json.php?pid='+<?php echo '"'.$pid.'"'; ?>+'&active='+<?php echo '"'.$active.'"'; ?>+'&where='+<?php echo '"'.rawurlencode($whereStr).'"'; ?>,
+            url: 'leaders_world_json.php?'+<?php echo $attributes; ?>,
             projection: 'EPSG:3857'
         }),
         opacity: 0.9

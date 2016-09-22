@@ -14,13 +14,15 @@
 		continue; //hacking attempt
 	}
 	
+	$fromDate = GetGet("fromdate", "");
+	$toDate = GetGet("todate", "");
+	
 	$sentimentStr = $sql_tools->GetSentimentStr(GetGet("sentiment", ""));
-	$temporalStr = $sql_tools->GetTemporalStr(GetGet("fromdate", ""), GetGet("todate", ""), GetGet("fromhour", ""), GetGet("tohour", ""));
-	$where = $sql_tools->CreateWhere(array("lang = 'es'",$sentimentStr,$temporalStr));
+	$temporalStr = $sql_tools->GetTemporalStr($fromDate, $toDate, GetGet("fromhour", ""), GetGet("tohour", ""));
 	
 	$returned = $sql_tools->GetSearchsActive(GetGet("pid", current($sql_tools->GetProjects($userData["id"]))['id']), GetGet("active", 1));
 	
-	$results = $sql_tools->GetAverageValues(array_column($returned,'id'), "day", $where, GetGet("catType", ""));
+	$results = $sql_tools->GetAverageValues(array_column($returned,'id'), "day", $fromDate, $toDate, array("lang = 'es'",$sentimentStr,$temporalStr), GetGet("catType", ""));
 	
 	if(empty($results)){
 		echo('<h3 style="margin-top:0;padding-left:1em;">No matching results found...</h3>');
@@ -73,7 +75,7 @@
   <?php 
   	$counter = 1;
 	$dataSets = array();
-  	foreach ($results as $search_id => $value) { 
+  	foreach (array_keys($results) as $search_id) { 
 		$dataSets[] = "{" .
 		"\"title\": \"{$returned[$search_id]['name']}\"," .
 		'"fieldMappings":[{"fromField":"value","toField":"value"},{"fromField":"volume","toField":"volume"}],' .
