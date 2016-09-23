@@ -108,7 +108,7 @@ if(!class_exists("sql_tools"))
     
     function GetSearchs($dbProjectId)
     {
-      return self::GetValuesFromQuery("SELECT t1.id as id, t1.name as name, t1.active as active, t2.string as search FROM `searchs` as t1 JOIN search_strings as t2 ON t1.search_string_id=t2.search_string_id where t1.project_id=".$dbProjectId);
+      return self::GetValuesFromQuery("SELECT t1.id as id, t1.name as name, CAST(t1.active AS SIGNED INTEGER) as active, t2.string as search FROM `searchs` as t1 JOIN search_strings as t2 ON t1.search_string_id=t2.search_string_id where t1.project_id=".$dbProjectId);
     }
     
     function GetProjectSearchsInfo($dbProjectId)
@@ -288,7 +288,7 @@ if(!class_exists("sql_tools"))
       $toReturn = array();
       foreach($dates as $date){
 		$res = self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery);
-		foreach($r in $res){
+		foreach($r as $res){
 		  if(!array_key_exists($r['search_id'])) $toReturn[$r['search_id']] = array();
 	      $toReturn[$r['search_id']] = array_merge($res,$toReturn[$r['search_id']]);
 		}
@@ -361,7 +361,7 @@ if(!class_exists("sql_tools"))
       $toReturn = array();
       foreach($dates as $date){
 		$res = self::GetValuesFromQuery($query . sprintf($fromStr,$date,$date) . $whereQuery . $finalQuery);
-		foreach($r in $res){
+		foreach($r as $res){
 		  if(!array_key_exists($r['search_id'])) $toReturn[$r['search_id']] = array();
 	      $toReturn[$r['search_id']] = array_merge($toReturn[$r['search_id']],$res);
 		}
@@ -510,7 +510,7 @@ if(!class_exists("sql_tools"))
 	    }
 	  }
 	  
-      $query = "SELECT distinct(IF(t1.polarity>30,'pos',IF(t1.polarity<-30,'neg','unk')))";
+      $query = "SELECT distinct(IF(t1.polarity>30,'pos',IF(t1.polarity<-30,'neg','unk'))) AS sentiment";
 	  $fromStr = " FROM cnt_extra_%s AS t1 JOIN cnt_info_%s AS t2 ON t1.cnt_id = t2.cnt_id";
       $whereQuery = " WHERE " . self::CreateWhere($where_arr + array("t2.search_id IN (".$search_ids .")"));
 	  $finalQuery = "";
