@@ -30,7 +30,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 import spanish_corrector as sc
 import observatoriohf
 
-MYIP = req.get('http://jsonip.com').json()['ip']
+MYIP = requests.get('http://jsonip.com').json()['ip']
 
 """                                 DECORATORS                              """
 
@@ -256,6 +256,7 @@ def analizeTweets(classifier, word_features):
     fetch_location = "select location from cnt_info_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_phtid = "select pht_id, url from pht_scraped_" + db_date_suffix + " where cnt_id = %s order by pht_id desc limit 1"
     update_extra = "update cnt_extra_" + db_date_suffix + " set polarity = %s, geolat = %s, geolon = %s where cnt_id = %s limit 1"
+    update_extra_gender_age = "update cnt_extra_" + db_date_suffix + " set gender = %s, age = %s where cnt_id = %s limit 1"
     update_extra_without_geo = "update cnt_extra_" + db_date_suffix + " set polarity = %s where cnt_id = %s limit 1"
     update_extra_without_pol = "update cnt_extra_" + db_date_suffix + " set geolat = %s, geolon = %s where cnt_id = %s limit 1"
     update_interactions = "update cnt_interactions_" + db_date_suffix + " set original_lat = %s, original_lon = %s where cnt_id = %s limit 1"
@@ -266,19 +267,20 @@ def analizeTweets(classifier, word_features):
     try:
 
         cur.execute(fetch_unclassified)
+        conn.commit()
         for cnt_id, geoLat, geoLon in [tuple(row) for row in cur]:
 
-            conn.commit()
             cur.execute(fetch_content,(cnt_id,))
             content = cur.fetchone()[0]
-            
             conn.commit()
+            
             cur.execute(fetch_original,(cnt_id,))
             original_lat, original_lon, original_location = cur.fetchone()
-            
             conn.commit()
+            
             cur.execute(fetch_location,(cnt_id,))
             location = cur.fetchone()[0]
+            conn.commit()
             
             feats = find_features(content)
             #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
@@ -287,29 +289,30 @@ def analizeTweets(classifier, word_features):
             original_lat, original_lon, original_geo = GeoLocalize(original_location) if any([original_lat != 0, original_lon != 0]) else (original_lat, original_lon, 0)
             
             if geo == 1 and pol == 1:
-                conn.commit()
                 cur.execute(update_extra, (polarity, geoLat, geoLon, cnt_id))
+                conn.commit()
             elif pol == 1:
+                cur.execute(update_extra_without_geo, (polarity, cnt_id))
                 conn.commit()
-                cur.execute(update_extra_without_geo, (polarity, cnt_id))                
             elif geo == 1:
+                cur.execute(update_extra_without_pol, (geoLat, geoLon, cnt_id))
                 conn.commit()
-                cur.execute(update_extra_without_pol, (geoLat, geoLon, cnt_id))                
             
             if original_geo == 1:
-                conn.commit()
                 cur.execute(update_interactions, (original_lat, original_lon, cnt_id))
+                conn.commit()
             
-            conn.commit()
             cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
-            
             conn.commit()
-            cur.execute(fetch_phtid, cnt_id)
-            pht_id, url = cur.fetchone()
             
-            if(pht_id):
+            cur.execute(fetch_phtid, (cnt_id,))
+            conn.commit()
+            res = cur.fetchone()
+            if(res != None):
+                
+                pht_id, url = tuple(res)
 
-                headers = dict(Content-Type='application/json')
+                headers = {'Content-Type':'application/json'}
                 age = 255
                 age_inferred = 0
                 gender = 0
@@ -317,24 +320,27 @@ def analizeTweets(classifier, word_features):
                 
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='age_classifier.pkl'))
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
-                labels, predictions = (pickle.loads(d) for d in r.json()['data'])
+                labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
                 #Maximum Likelihood classifier
                 age, age_inferred = int(labels[np.argmax(predictions)]), 1
 
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
-                labels, predictions = (pickle.loads(d) for d in r.json()['data'])
+                labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
                 #Mixed Classifier
                 labels = np.array(labels)
                 predictions = np.array(predictions)
                 if(labels[np.argmax(predictions)] != 'u'):
-                    gender, gender_inferred = int((values[labels == 'f']/np.sum(values[labels != 'u'])*255-128).round().tolist()[0]), 1
+                    gender, gender_inferred = int((predictions[labels == 'f']/np.sum(predictions[labels != 'u'])*255-128).round().tolist()[0]), 1
                     
-                conn.commit()
                 cur.execute(update_pht_extra, (gender, age, 0, pht_id))
-                
                 conn.commit()
+                
                 cur.execute(update_pht_inferred, (gender_inferred, age_inferred, 0, pht_id))
+                conn.commit()
+                
+                cur.execute(update_extra_gender_age, (gender, age, cnt_id))
+                conn.commit()
 
     except mysqlconn.Error as err:
         logging.error(err)

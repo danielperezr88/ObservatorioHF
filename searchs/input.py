@@ -167,7 +167,7 @@ class MyListener(StreamListener):
 
             user_name = emoji_pattern.sub(r'',tweet['user']['screen_name'])
             user_id_str = tweet['user']['id_str']
-            user_img = tweet['user']['profile_image_url']
+            user_img = tweet['user']['profile_image_url']            
 
             location = emoji_pattern.sub(r'',str(tweet['user']['location']))
 
@@ -230,15 +230,21 @@ class MyListener(StreamListener):
             conn.commit()
             
             if(user_img != ''):
-                anadir_img = ("INSERT INTO "+ 'pht_scrapped_' + db_date_suffix + "(cnt_id, url, url_is_available) VALUES (%s, %s, %s)")
+                
+                user_img = re.sub(r'\_normal\.jpg',r'\.jpg',user_img)
+                
+                anadir_img = ("INSERT INTO "+ 'pht_scraped_' + db_date_suffix + " (cnt_id, url, url_is_available) VALUES (%s, %s, %s)")
                 cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (cnt_id, user_img, 1)))
+                conn.commit()
                 pht_id = cursor.lastrowid
                 
-                anadir_img = ("INSERT INTO "+ 'pht_extra_' + db_date_suffix + "(pht_id, created_at) VALUES (%s, %s)")
+                anadir_img = ("INSERT INTO "+ 'pht_extra_' + db_date_suffix + " (pht_id, created_at) VALUES (%s, %s)")
                 cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (pht_id, date_str)))
+                conn.commit()
                 
-                anadir_img = ("INSERT INTO "+ 'pht_whats_inferred_' + db_date_suffix + "(pht_id) VALUES (%s)")
-                cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (pht_id)))
+                anadir_img = ("INSERT INTO "+ 'pht_whats_inferred_' + db_date_suffix + " (pht_id) VALUES (%s)")
+                cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (pht_id,)))
+                conn.commit()
             
             cursor.close()
             conn.close()
