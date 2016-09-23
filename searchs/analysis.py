@@ -12,6 +12,7 @@ importlib.reload(sys)
 
 import logging, inspect
 from dateutil import parser
+import numpy as np
 
 import json, pickle
 import unicodedata
@@ -28,6 +29,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 import spanish_corrector as sc
 import observatoriohf
+
+MYIP = req.get('http://jsonip.com').json()['ip']
 
 """                                 DECORATORS                              """
 
@@ -251,11 +254,14 @@ def analizeTweets(classifier, word_features):
     fetch_content = "select content from cnt_scraped_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_original = "select original_lat, original_lon, original_location from cnt_interactions_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_location = "select location from cnt_info_" + db_date_suffix + " where cnt_id = %s limit 1"
+    fetch_phtid = "select pht_id, url from pht_scraped_" + db_date_suffix + " where cnt_id = %s order by pht_id desc limit 1"
     update_extra = "update cnt_extra_" + db_date_suffix + " set polarity = %s, geolat = %s, geolon = %s where cnt_id = %s limit 1"
     update_extra_without_geo = "update cnt_extra_" + db_date_suffix + " set polarity = %s where cnt_id = %s limit 1"
     update_extra_without_pol = "update cnt_extra_" + db_date_suffix + " set geolat = %s, geolon = %s where cnt_id = %s limit 1"
     update_interactions = "update cnt_interactions_" + db_date_suffix + " set original_lat = %s, original_lon = %s where cnt_id = %s limit 1"
     update_inferred = "update cnt_whats_inferred_" + db_date_suffix + " set geo = %s, original_geo = %s, polarity = %s where cnt_id = %s limit 1"
+    update_pht_extra = "update pht_extra_" + db_date_suffix + " set gender = %s, age = %s, is_multiface = %s where pht_id = %s limit 1"
+    update_pht_inferred = "update pht_whats_inferred_" + db_date_suffix + " set gender = %s, age = %s, is_multiface = %s where pht_id = %s limit 1"
     
     try:
 
@@ -296,6 +302,39 @@ def analizeTweets(classifier, word_features):
             
             conn.commit()
             cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
+            
+            conn.commit()
+            cur.execute(fetch_phtid, cnt_id)
+            pht_id, url = cur.fetchone()
+            
+            if(pht_id):
+
+                headers = dict(Content-Type='application/json')
+                age = 255
+                age_inferred = 0
+                gender = 0
+                gender_inferred = 0
+                
+                data = json.dumps(dict(image=url,cuda=False,classifierModel='age_classifier.pkl'))
+                r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
+                labels, predictions = (pickle.loads(d) for d in r.json()['data'])
+                #Maximum Likelihood classifier
+                age, age_inferred = int(labels[np.argmax(predictions)]), 1
+
+                data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
+                r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
+                labels, predictions = (pickle.loads(d) for d in r.json()['data'])
+                #Mixed Classifier
+                labels = np.array(labels)
+                predictions = np.array(predictions)
+                if(labels[np.argmax(predictions)] != 'u'):
+                    gender, gender_inferred = int((values[labels == 'f']/np.sum(values[labels != 'u'])*255-128).round().tolist()[0]), 1
+                    
+                conn.commit()
+                cur.execute(update_pht_extra, (gender, age, 0, pht_id))
+                
+                conn.commit()
+                cur.execute(update_pht_inferred, (gender_inferred, age_inferred, 0, pht_id))
 
     except mysqlconn.Error as err:
         logging.error(err)

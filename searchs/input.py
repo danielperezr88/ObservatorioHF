@@ -167,6 +167,7 @@ class MyListener(StreamListener):
 
             user_name = emoji_pattern.sub(r'',tweet['user']['screen_name'])
             user_id_str = tweet['user']['id_str']
+            user_img = tweet['user']['profile_image_url']
 
             location = emoji_pattern.sub(r'',str(tweet['user']['location']))
 
@@ -227,6 +228,17 @@ class MyListener(StreamListener):
             anadir_inferred = ("INSERT INTO " + 'cnt_whats_inferred_' + db_date_suffix + " (cnt_id, geo, original_geo, lang) VALUES (%s, %s, %s, %s)")
             cursor.execute(anadir_inferred,tuple((reg if reg != None else '') for reg in (cnt_id, int(any([lat!=0,lon!=0])), int(any([retweetedLat!=0,retweetedLon!=0])), lang)))
             conn.commit()
+            
+            if(user_img != ''):
+                anadir_img = ("INSERT INTO "+ 'pht_scrapped_' + db_date_suffix + "(cnt_id, url, url_is_available) VALUES (%s, %s, %s)")
+                cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (cnt_id, user_img, 1)))
+                pht_id = cursor.lastrowid
+                
+                anadir_img = ("INSERT INTO "+ 'pht_extra_' + db_date_suffix + "(pht_id, created_at) VALUES (%s, %s)")
+                cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (pht_id, date_str)))
+                
+                anadir_img = ("INSERT INTO "+ 'pht_whats_inferred_' + db_date_suffix + "(pht_id) VALUES (%s)")
+                cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (pht_id)))
             
             cursor.close()
             conn.close()
