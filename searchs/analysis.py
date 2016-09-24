@@ -27,9 +27,23 @@ import MySQLdb.connections as mysqlconn
 
 from sklearn.feature_extraction.text import CountVectorizer
 
+from google.protobuf import timestamp_pb2
+from gcloud import storage
+
 import spanish_corrector as sc
 import observatoriohf
 
+CONFIG_BUCKET = 'configs-hf'
+
+client = storage.Client()
+cblob = client.get_bucket(CONFIG_BUCKET).get_blob('ofapiconfig.py')
+fp = open('ofapiconfig.py','wb')
+cblob.download_to_file(fp)
+fp.close()
+
+import ofapiconfig
+
+OF_API_IP = ofapiconfig.ip
 MYIP = requests.get('http://jsonip.com').json()['ip']
 
 """                                 DECORATORS                              """
@@ -320,7 +334,7 @@ def analizeTweets(classifier, word_features):
                 error = 0
                 
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='age_classifier.pkl'))
-                r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
+                r = requests.get('http://'+OF_API_IP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
                     labels, predictions = r.json()['data']
                     if(labels is not None):
@@ -330,7 +344,7 @@ def analizeTweets(classifier, word_features):
                 else: error += 1
 
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
-                r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
+                r = requests.get('http://'+OF_API_IP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
                     labels, predictions = r.json()['data']
                     if(labels is not None):
