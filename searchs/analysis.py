@@ -323,24 +323,24 @@ def analizeTweets(classifier, word_features):
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
                     labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
-                    #Maximum Likelihood classifier
-                    age, age_inferred = int(labels[np.argmax(predictions)]), 1
-                else:
-                    error += 1
-                    logging.error(r)
+                    if(labels is not None):
+                        #Maximum Likelihood classifier
+                        age, age_inferred = int(labels[np.argmax(predictions)]), 1
+                    else: error += 1
+                else: error += 1
 
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
                     labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
-                    #Mixed Classifier
-                    labels = np.array(labels)
-                    predictions = np.array(predictions)
-                    if(labels[np.argmax(predictions)] != 'u'):
-                        gender, gender_inferred = int((predictions[labels == 'f']/np.sum(predictions[labels != 'u'])*255-128).round().tolist()[0]), 1
-                else:
-                    error += 1
-                    logging.error(r)
+                    if(labels is not None):
+                        #Mixed Classifier
+                        labels = np.array(labels)
+                        predictions = np.array(predictions)
+                        if(labels[np.argmax(predictions)] != 'u'):
+                            gender, gender_inferred = int((predictions[labels == 'f']/np.sum(predictions[labels != 'u'])*255-128).round().tolist()[0]), 1
+                    else: error += 1
+                else: error += 1
                 
                 if error == 2: continue
                 
