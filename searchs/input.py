@@ -232,6 +232,7 @@ class MyListener(StreamListener):
             if(user_img != ''):
                 
                 user_img = re.sub(r'\_normal\.jpg',r'.jpg',user_img)
+                user_img = re.sub(r'\_normal\.jpeg',r'.jpeg',user_img)
                 
                 anadir_img = ("INSERT INTO "+ 'pht_scraped_' + db_date_suffix + " (cnt_id, url, url_is_available) VALUES (%s, %s, %s)")
                 cursor.execute(anadir_img,tuple((reg if reg != None else '') for reg in (cnt_id, user_img, 1)))

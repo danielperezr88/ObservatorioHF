@@ -271,16 +271,16 @@ def analizeTweets(classifier, word_features):
         for cnt_id, geoLat, geoLon in [tuple(row) for row in cur]:
 
             cur.execute(fetch_content,(cnt_id,))
-            content = cur.fetchone()[0]
             conn.commit()
+            content = cur.fetchone()[0]
             
             cur.execute(fetch_original,(cnt_id,))
-            original_lat, original_lon, original_location = cur.fetchone()
             conn.commit()
+            original_lat, original_lon, original_location = cur.fetchone()
             
             cur.execute(fetch_location,(cnt_id,))
-            location = cur.fetchone()[0]
             conn.commit()
+            location = cur.fetchone()[0]
             
             feats = find_features(content)
             #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
