@@ -322,7 +322,7 @@ def analizeTweets(classifier, word_features):
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='age_classifier.pkl'))
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
-                    labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
+                    labels, predictions = r.json()['data']
                     if(labels is not None):
                         #Maximum Likelihood classifier
                         age, age_inferred = int(labels[np.argmax(predictions)]), 1
@@ -332,7 +332,7 @@ def analizeTweets(classifier, word_features):
                 data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
                 r = requests.get('http://'+MYIP+':8889/api/aligninfer', data=data, headers=headers)
                 if(r.status_code==200):
-                    labels, predictions, BoundingBox, TransMatrix = (pickle.loads(d) for d in r.json()['data'])
+                    labels, predictions = r.json()['data']
                     if(labels is not None):
                         #Mixed Classifier
                         labels = np.array(labels)
