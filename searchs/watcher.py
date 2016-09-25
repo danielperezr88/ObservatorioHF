@@ -196,6 +196,25 @@ def keep_analizer_alive(pythonPath, dirname):
         with open(pidfile, 'w') as f:
             f.write(pid)
 
+def keep_image_analizer_alive(pythonPath, dirname):
+    analizer_name = "img_analysis.py"
+    filename = os.path.join(dirname, analizer_name)
+    pidfile = os.path.join(dirname, analizer_name + ".pid")
+    if os.path.exists(pidfile):
+        pid_data = ''
+        # check if pid is running
+        with open(pidfile, 'r') as f:
+            pid_data = f.read()
+        if not check_pid(pid_data):
+            pid = str(subprocess.Popen([pythonPath,filename]).pid)
+            os.remove(pidfile)
+            with open(pidfile, 'w') as f:
+                f.write(pid)
+    else:
+        pid = str(subprocess.Popen([pythonPath,filename]).pid)
+        with open(pidfile, 'w') as f:
+            f.write(pid)
+
 def move_from_to(dir_from, dir_to):
     files = glob.glob(os.path.join(dir_from, "*"))
     filtered = [f for f in files if '.log' not in os.path.basename(f)]
@@ -300,6 +319,7 @@ def main():
         pyfiles = get_files_to_watch(dirname)
         keep_processes_alive(pyfiles, pythonPath, dirname)
         keep_analizer_alive(pythonPath, dirname)
+        keep_image_analizer_alive(pythonPath, dirname)
         time.sleep(3) # delays for 3 seconds
     
 if __name__ == '__main__':

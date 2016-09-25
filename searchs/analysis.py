@@ -33,19 +33,6 @@ from gcloud import storage
 import spanish_corrector as sc
 import observatoriohf
 
-CONFIG_BUCKET = 'configs-hf'
-dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
-
-client = storage.Client()
-cblob = client.get_bucket(CONFIG_BUCKET).get_blob('ofapiconfig.py')
-fp = open(os.path.join(dirname,'ofapiconfig.py'),'wb')
-cblob.download_to_file(fp)
-fp.close()
-
-import ofapiconfig
-
-OF_API_IP = ofapiconfig.ip
-MYIP = requests.get('http://jsonip.com').json()['ip']
 
 """                                 DECORATORS                              """
 
@@ -269,15 +256,11 @@ def analizeTweets(classifier, word_features):
     fetch_content = "select content from cnt_scraped_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_original = "select original_lat, original_lon, original_location from cnt_interactions_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_location = "select location from cnt_info_" + db_date_suffix + " where cnt_id = %s limit 1"
-    fetch_phtid = "select pht_id, url from pht_scraped_" + db_date_suffix + " where cnt_id = %s order by pht_id desc limit 1"
     update_extra = "update cnt_extra_" + db_date_suffix + " set polarity = %s, geolat = %s, geolon = %s where cnt_id = %s limit 1"
-    update_extra_gender_age = "update cnt_extra_" + db_date_suffix + " set gender = %s, age = %s where cnt_id = %s limit 1"
     update_extra_without_geo = "update cnt_extra_" + db_date_suffix + " set polarity = %s where cnt_id = %s limit 1"
     update_extra_without_pol = "update cnt_extra_" + db_date_suffix + " set geolat = %s, geolon = %s where cnt_id = %s limit 1"
     update_interactions = "update cnt_interactions_" + db_date_suffix + " set original_lat = %s, original_lon = %s where cnt_id = %s limit 1"
-    update_inferred = "update cnt_whats_inferred_" + db_date_suffix + " set geo = %s, original_geo = %s, polarity = %s where cnt_id = %s limit 1"
-    update_pht_extra = "update pht_extra_" + db_date_suffix + " set gender = %s, age = %s, is_multiface = %s where pht_id = %s limit 1"
-    update_pht_inferred = "update pht_whats_inferred_" + db_date_suffix + " set gender = %s, age = %s, is_multiface = %s where pht_id = %s limit 1"
+    update_inferred = "update cnt_whats_inferred_" + db_date_suffix + " set geo = %s, original_geo = %s, polarity = %s where cnt_id = %s limit 1"    
     
     try:
 
@@ -320,54 +303,6 @@ def analizeTweets(classifier, word_features):
             cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
             conn.commit()
             
-            cur.execute(fetch_phtid, (cnt_id,))
-            conn.commit()
-            res = cur.fetchone()
-            if(res != None):
-                
-                pht_id, url = tuple(res)
-
-                headers = {'Content-Type':'application/json'}
-                age = 255
-                age_inferred = 0
-                gender = 0
-                gender_inferred = 0
-                error = 0
-                
-                data = json.dumps(dict(image=url,cuda=False,classifierModel='age_classifier.pkl'))
-                r = requests.get('http://'+OF_API_IP+':8889/api/aligninfer', data=data, headers=headers)
-                if(r.status_code==200):
-                    labels, predictions = r.json()['data']
-                    if(labels is not None):
-                        #Maximum Likelihood classifier
-                        age, age_inferred = int(labels[np.argmax(predictions)]), 1
-                    else: error += 1
-                else: error += 1
-
-                data = json.dumps(dict(image=url,cuda=False,classifierModel='gender_classifier.pkl'))
-                r = requests.get('http://'+OF_API_IP+':8889/api/aligninfer', data=data, headers=headers)
-                if(r.status_code==200):
-                    labels, predictions = r.json()['data']
-                    if(labels is not None):
-                        #Mixed Classifier
-                        labels = np.array(labels)
-                        predictions = np.array(predictions)
-                        if(labels[np.argmax(predictions)] != 'u'):
-                            gender, gender_inferred = int((predictions[labels == 'f']/np.sum(predictions[labels != 'u'])*255-128).round().tolist()[0]), 1
-                    else: error += 1
-                else: error += 1
-                
-                if error == 2: continue
-                
-                cur.execute(update_pht_extra, (gender, age, 0, pht_id))
-                conn.commit()
-                
-                cur.execute(update_pht_inferred, (gender_inferred, age_inferred, 0, pht_id))
-                conn.commit()
-                
-                cur.execute(update_extra_gender_age, (gender, age, cnt_id))
-                conn.commit()
-
     except mysqlconn.Error as err:
         logging.error(err)
 
@@ -379,6 +314,9 @@ def analizeTweets(classifier, word_features):
 
 def main():
     """ Create/Retrieve working dirs """
+    basepath = inspect.getfile(inspect.currentframe())
+    dirname = os.path.dirname(basepath)
+    basename = os.path.basename(basepath)
     inputDir = os.path.join(dirname, "analysis")
     outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
@@ -391,7 +329,6 @@ def main():
         nltk.download('stopwords','/root/nltk_data')
     
     """ Logging configuration """
-    basename = os.path.basename(inspect.getfile(inspect.currentframe()))
     logfilename = os.path.join(outputDir,basename) + ".log"
     logging.basicConfig(filename=logfilename,level=logging.ERROR, format='%(asctime)s %(message)s')
     logging.info('Started')
