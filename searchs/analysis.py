@@ -34,10 +34,11 @@ import spanish_corrector as sc
 import observatoriohf
 
 CONFIG_BUCKET = 'configs-hf'
+dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
 
 client = storage.Client()
 cblob = client.get_bucket(CONFIG_BUCKET).get_blob('ofapiconfig.py')
-fp = open('ofapiconfig.py','wb')
+fp = open(os.path.join(dirname,'ofapiconfig.py'),'wb')
 cblob.download_to_file(fp)
 fp.close()
 
@@ -378,7 +379,6 @@ def analizeTweets(classifier, word_features):
 
 def main():
     """ Create/Retrieve working dirs """
-    dirname = os.path.dirname(inspect.getfile(inspect.currentframe()))
     inputDir = os.path.join(dirname, "analysis")
     outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
