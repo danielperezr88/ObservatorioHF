@@ -33,6 +33,19 @@ from gcloud import storage
 import spanish_corrector as sc
 import observatoriohf
 
+CONFIG_BUCKET = 'configs-hf'
+basepath = inspect.getfile(inspect.currentframe())
+dirname = os.path.dirname(basepath)
+basename = os.path.basename(basepath)
+
+client = storage.Client()
+cblob = client.get_bucket(CONFIG_BUCKET).get_blob('apikeys.py')
+fp = open(os.path.join(dirname,'apikeys.py'),'wb')
+cblob.download_to_file(fp)
+fp.close()
+
+import apikeys
+
 
 """                                 DECORATORS                              """
 
@@ -219,7 +232,8 @@ def GetGoogleLocation(location):
     ''' Try it at lesast 3 times before desist '''
     for attempt in range(3):
         try:
-            r = requests.get('http://maps.googleapis.com/maps/api/geocode/json', params={'address': location})
+            r = requests.get('http://maps.googleapis.com/maps/api/geocode/json',
+                             params={'address': location, 'key': apikeys.google_geocode_api_key})
             jsonDecoded = json.loads(r.content.decode("utf-8") )
             if (len(jsonDecoded["results"]) > 0):
                 geoLoc = jsonDecoded["results"][0]["geometry"]["location"]
@@ -274,34 +288,34 @@ def analizeTweets(classifier, word_features):
             
             cur.execute(fetch_original,(cnt_id,))
             conn.commit()
-            original_lat, original_lon, original_location = cur.fetchone()
+            for original_lat, original_lon, original_location in [(tuple(row) if row != None else tuple(0,0,'')) for row in cur]:
             
-            cur.execute(fetch_location,(cnt_id,))
-            conn.commit()
-            location = cur.fetchone()[0]
-            
-            feats = find_features(content)
-            #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
-            polarity, pol = retrieveClassAndConfidence(classifier, feats)
-            geoLat, geoLon, geo = GeoLocalize(location) if any([geoLat != 0, geoLon != 0]) else (geoLat, geoLon, 0)
-            original_lat, original_lon, original_geo = GeoLocalize(original_location) if any([original_lat != 0, original_lon != 0]) else (original_lat, original_lon, 0)
-            
-            if geo == 1 and pol == 1:
-                cur.execute(update_extra, (polarity, geoLat, geoLon, cnt_id))
+                cur.execute(fetch_location,(cnt_id,))
                 conn.commit()
-            elif pol == 1:
-                cur.execute(update_extra_without_geo, (polarity, cnt_id))
+                location = cur.fetchone()[0]
+                
+                feats = find_features(content)
+                #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
+                polarity, pol = retrieveClassAndConfidence(classifier, feats)
+                geoLat, geoLon, geo = GeoLocalize(location) if any([geoLat != 0, geoLon != 0]) else (geoLat, geoLon, 0)
+                original_lat, original_lon, original_geo = GeoLocalize(original_location) if any([original_lat != 0, original_lon != 0]) else (original_lat, original_lon, 0)
+                
+                if geo == 1 and pol == 1:
+                    cur.execute(update_extra, (polarity, geoLat, geoLon, cnt_id))
+                    conn.commit()
+                elif pol == 1:
+                    cur.execute(update_extra_without_geo, (polarity, cnt_id))
+                    conn.commit()
+                elif geo == 1:
+                    cur.execute(update_extra_without_pol, (geoLat, geoLon, cnt_id))
+                    conn.commit()
+                
+                if original_geo == 1:
+                    cur.execute(update_interactions, (original_lat, original_lon, cnt_id))
+                    conn.commit()
+                
+                cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
                 conn.commit()
-            elif geo == 1:
-                cur.execute(update_extra_without_pol, (geoLat, geoLon, cnt_id))
-                conn.commit()
-            
-            if original_geo == 1:
-                cur.execute(update_interactions, (original_lat, original_lon, cnt_id))
-                conn.commit()
-            
-            cur.execute(update_inferred, (geo, original_geo, pol, cnt_id))
-            conn.commit()
             
     except mysqlconn.Error as err:
         logging.error(err)
@@ -314,9 +328,6 @@ def analizeTweets(classifier, word_features):
 
 def main():
     """ Create/Retrieve working dirs """
-    basepath = inspect.getfile(inspect.currentframe())
-    dirname = os.path.dirname(basepath)
-    basename = os.path.basename(basepath)
     inputDir = os.path.join(dirname, "analysis")
     outputDir = os.path.join(dirname, "analized")
     maybeCreateDirs([inputDir,outputDir])    
