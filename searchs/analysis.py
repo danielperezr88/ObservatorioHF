@@ -232,7 +232,7 @@ def GetGoogleLocation(location):
     ''' Try it at lesast 3 times before desist '''
     for attempt in range(3):
         try:
-            r = requests.get('http://maps.googleapis.com/maps/api/geocode/json',
+            r = requests.get('https://maps.googleapis.com/maps/api/geocode/json',
                              params={'address': location, 'key': apikeys.google_geocode_api_key})
             jsonDecoded = json.loads(r.content.decode("utf-8") )
             if (len(jsonDecoded["results"]) > 0):
