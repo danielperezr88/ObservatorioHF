@@ -240,14 +240,12 @@ def GetGoogleLocation(location):
                 return geoLoc["lat"], geoLoc["lng"]
             else:
                 return 0, 0
-        except BaseException as e:
+        except Exception as e:
             print("Error GetGoogleLocation: %s" % str(e))
             logging.error("Error GeoLocalize: %s" % str(e))
             sleep(1)
-        else:
-            break
-    else:
-        return 0, 0
+    
+    return 0, 0
 
 def GeoLocalize(location):
         
@@ -297,7 +295,7 @@ def analizeTweets(classifier, word_features):
                 feats = find_features(content)
                 #sentiment, confidence = retrieveClassAndConfidence(classifier, feats)
                 polarity, pol = retrieveClassAndConfidence(classifier, feats)
-                geoLat, geoLon, geo = GeoLocalize(location) if any([geoLat != 0, geoLon != 0]) else (geoLat, geoLon, 0)
+                geoLat, geoLon, geo = GeoLocalize(location) if any([geoLat == 0, geoLon == 0]) else (geoLat, geoLon, 0)
                 original_lat, original_lon, original_geo = GeoLocalize(original_location) if any([original_lat != 0, original_lon != 0]) else (original_lat, original_lon, 0)
                 
                 if geo == 1 and pol == 1:
