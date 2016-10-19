@@ -6,9 +6,9 @@ Created on Sun Sep 25 11:17:44 2016
 """
 
 import os
+import sys
 import pickle
 import inspect
-import codecs
 import logging
 import pandas as pd
 import numpy as np
@@ -27,7 +27,7 @@ basepath = inspect.getfile(inspect.currentframe())
 dirname = os.path.dirname(basepath)
 basename = os.path.basename(basepath)
 
-with codecs.open(os.path.join(WDIR,PYDIR,PICKLEDIR,'SpainMuniPaths.pkl'),'rb',encoding='utf-8', errors='ignore') as fp:
+with open(os.path.join(WDIR,PYDIR,PICKLEDIR,'SpainMuniPaths.pkl'),'rb') as fp:
     data = pickle.load(fp)
 
 """
@@ -69,14 +69,14 @@ def analyzeTweets():
 	
     anadir_tabla_countries = ("""CREATE TABLE IF NOT EXISTS `countries` (
         `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `name` CHAR(128) NOT NULL
+        `name` CHAR(128) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;""")
 	
     anadir_tabla_regions = ("""CREATE TABLE IF NOT EXISTS `regions` (
         `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `country_id` INT UNSIGNED NOT NULL DEFAULT 999999,
-        `name` CHAR(128) NOT NULL
+        `name` CHAR(128) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;""")
 	
@@ -84,7 +84,7 @@ def analyzeTweets():
         `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `country_id` INT UNSIGNED NOT NULL DEFAULT 999999,
         `region_id` INT UNSIGNED NOT NULL DEFAULT 999999,
-        `name` CHAR(128) NOT NULL
+        `name` CHAR(128) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;""")
 	
@@ -93,7 +93,7 @@ def analyzeTweets():
         `country_id` INT UNSIGNED NOT NULL DEFAULT 999999,
         `region_id` INT UNSIGNED NOT NULL DEFAULT 999999,
         `province_id` INT UNSIGNED NOT NULL DEFAULT 999999,
-        `name` CHAR(128) NOT NULL
+        `name` CHAR(128) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;""")
 	
@@ -111,7 +111,7 @@ def analyzeTweets():
     select_province = """SELECT id, region_id, country_id FROM provinces WHERE name = %s LIMIT 1"""
     select_municipality = """SELECT id, province_id, region_id, country_id FROM municipalities WHERE name = %s LIMIT 1"""
 	
-    set_geo_extra = """INSERT INTO geo_extra_%s (cnt_id,municipality,province,region,country) VALUES (%s,%s,%s,%s,%s)"""
+    set_geo_extra = """INSERT INTO geo_extra_""" + db_date_suffix + """ (cnt_id,municipality,province,region,country) VALUES (%s,%s,%s,%s,%s)"""
     
     dbconfig = dict(user=observatoriohf.dbuser,passwd=observatoriohf.dbpassword,
                     host=observatoriohf.dbhost,db=observatoriohf.dbdatabase)
@@ -147,50 +147,50 @@ def analyzeTweets():
 
                         try:
 					
-                            cur2.execute(select_municipality%(municipality,))
+                            cur2.execute(select_municipality,(municipality,))
                             if cur2.rowcount == 0:
                                 conn2.commit()
-                                cur2.execute(select_province%(province,))
+                                cur2.execute(select_province,(province,))
                                 if cur2.rowcount == 0:
                                     conn2.commit()
-                                    cur2.execute(select_region%(region,))
+                                    cur2.execute(select_region,(region,))
                                     if cur2.rowcount == 0:
                                         conn2.commit()
-                                        cur2.execute(select_country%(country,))
+                                        cur2.execute(select_country,(country,))
                                         if cur2.rowcount == 0:
                                             conn2.commit()
-                                            cur2.execute(add_country%(country,))
+                                            cur2.execute(add_country,(country,))
                                             country_id  = cur2.lastrowid
                                         else:
                                             country_id = cur2.fetchone()[0]
                                         conn2.commit()
-                                        cur2.execute(add_region%(region,country_id))
+                                        cur2.execute(add_region,(region,country_id))
                                         region_id  = cur2.lastrowid
                                     else:
-                                        region_id, country_id = cur2.fetchone()[0]
+                                        region_id, country_id = cur2.fetchone()
                                     conn2.commit()
-                                    cur2.execute(add_province%(province,region_id,country_id))
+                                    cur2.execute(add_province,(province,region_id,country_id))
                                     province_id  = cur2.lastrowid
                                 else:
-                                    province_id, region_id, country_id = cur2.fetchone()[0]
+                                    province_id, region_id, country_id = cur2.fetchone()
                                 conn2.commit()
-                                cur2.execute(add_municipality%(municipality,province_id,region_id,country_id))
+                                cur2.execute(add_municipality,(municipality,province_id,region_id,country_id))
                                 municipality_id  = cur2.lastrowid
                             else:
-                                municipality_id, province_id, region_id, country_id = cur2.fetchone()[0]
+                                municipality_id, province_id, region_id, country_id = cur2.fetchone()
                             conn2.commit()
                             
-                            cur2.execute(set_geo_extra%(db_date_suffix,cnt_id,municipality_id,province_id,region_id,country_id))
+                            cur2.execute(set_geo_extra,(cnt_id,municipality_id,province_id,region_id,country_id))
                             conn2.commit()
                             
-                        except mysqlconn.Error as err:
-                            logging.error(err)
+                        except Exception as err:
+                            logging.error("%s (%s)"%(str(err), sys.exc_info()[-1].tb_lineno))
                             
                         cur2.close()
                         conn2.close()
                             
-    except mysqlconn.Error as err:
-        logging.error(err)
+    except Exception as err:
+        logging.error("%s (%s)"%(str(err), sys.exc_info()[-1].tb_lineno))
                             
     cur.close()
     conn.close()
