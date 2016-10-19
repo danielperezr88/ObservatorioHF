@@ -216,15 +216,22 @@ def main():
     
     """ Process Id file creation """
     save_pid()
-
+    
     """Infinite looop."""
+    db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
     limit = 100
     offset = 0
     while True:
-        db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
+        
+        aux = parser.datetime.datetime.now().strftime("%Y_%m")
+        if(db_date_suffix != aux): #changed month
+            db_date_suffix = aux
+            offset = 0
+            
         if(analyzeTweets(db_date_suffix,limit,offset)): #whether we should update offset or not
             offset += limit
-        sleep(0.25) # delays for 0.25 seconds
+            
+        sleep(0.05) # delays for 0.25 seconds
     
 if __name__ == '__main__':
     
