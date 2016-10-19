@@ -54,9 +54,10 @@ def save_pid():
         logging.error('Failed to create pid file: '+ str(e))
 
 
-def analyzeTweets():
-
-    db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
+def analyzeTweets(db_date_suffix, limit, offset):
+    
+    records_found = False
+    last_reached = False
     
     anadir_tabla_geo_extra = ("""CREATE TABLE IF NOT EXISTS `geo_extra_%s` (
         `cnt_id` INT UNSIGNED NOT NULL,
@@ -96,10 +97,10 @@ def analyzeTweets():
         `name` CHAR(128) NOT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;""")
-	
+    
     fetch_unclassified = """SELECT t1.cnt_id, t1.geoLat, t1.geoLon
         FROM cnt_extra_%s AS t1 LEFT JOIN geo_extra_%s AS t2 ON t1.cnt_id = t2.cnt_id
-        WHERE t2.cnt_id IS NULL AND t1.geoLat <>  0 LIMIT 10000"""%(db_date_suffix,db_date_suffix)
+        WHERE t2.cnt_id IS NULL AND t1.geoLat <>  0 LIMIT %s OFFSET %s"""%(db_date_suffix,db_date_suffix,limit,offset)
 	
     add_country = """INSERT INTO countries (name) VALUES (%s)"""
     add_region = """INSERT INTO regions (name,country_id) VALUES (%s,%s)"""
@@ -135,10 +136,15 @@ def analyzeTweets():
         cur.execute(fetch_unclassified)
         conn.commit()
         
+        if cur.rowcount == limit:
+            last_reached = True
+        
         for cnt_id, lat, lon in [tuple(row) for row in cur]:
             for municipality, province, region, country, pths in np.array(data):
                 for p in pickle.loads(pths):
                     if p.contains_point((lat,lon)):
+                        
+                        records_found = True
 
                         conn2 = mysqlconn.Connection(**dbconfig)
                         cur2 = conn2.cursor()
@@ -194,6 +200,8 @@ def analyzeTweets():
                             
     cur.close()
     conn.close()
+    
+    return last_reached and not records_found
 
 
 def main():
@@ -210,8 +218,12 @@ def main():
     save_pid()
 
     """Infinite looop."""
+    limit = 100
+    offset = 0
     while True:
-        analyzeTweets()
+        db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
+        if(analyzeTweets(db_date_suffix,limit,offset)): #whether we should update offset or not
+            offset += limit
         sleep(0.25) # delays for 0.25 seconds
     
 if __name__ == '__main__':
