@@ -30,6 +30,14 @@ basename = os.path.basename(basepath)
 with open(os.path.join(WDIR,PYDIR,PICKLEDIR,'SpainMuniPaths.pkl'),'rb') as fp:
     data = pickle.load(fp)
 
+def memoize(f):
+  class memodict(dict):
+      __slots__ = ()
+      def __missing__(self, key):
+          self[key] = ret = f(key)
+          return ret
+  return memodict().__getitem__
+
 """
     maybeCreateDirs(<list|string>) -> <> (os)
         Creates directories on given paths if they don't exist yet.
@@ -53,6 +61,13 @@ def save_pid():
     except BaseException as e:
         logging.error('Failed to create pid file: '+ str(e))
 
+@memoize
+def checkPaths(point):
+    for municipality, province, region, country, pths in np.array(data):
+        for p in pickle.loads(pths):
+            if p.contains_point(point):
+                return (municipality, province, region, country)
+    return None
 
 def analyzeTweets(db_date_suffix, limit, offset):
     
@@ -140,60 +155,60 @@ def analyzeTweets(db_date_suffix, limit, offset):
             last_reached = True
         
         for cnt_id, lat, lon in [tuple(row) for row in cur]:
-            for municipality, province, region, country, pths in np.array(data):
-                for p in pickle.loads(pths):
-                    if p.contains_point((lat,lon)):
-                        
-                        records_found = True
+            res = checkPaths((lat,lon))
+            if res is not None:
+                
+                records_found = True
 
-                        conn2 = mysqlconn.Connection(**dbconfig)
-                        cur2 = conn2.cursor()
-				
-                        country_id = region_id = province_id = municipality_id = 999999
+                conn2 = mysqlconn.Connection(**dbconfig)
+                cur2 = conn2.cursor()
+                
+                municipality, province, region, country = res
+                country_id = region_id = province_id = municipality_id = 999999
 
-                        try:
+                try:
 					
-                            cur2.execute(select_municipality,(municipality,))
+                    cur2.execute(select_municipality,(municipality,))
+                    if cur2.rowcount == 0:
+                        conn2.commit()
+                        cur2.execute(select_province,(province,))
+                        if cur2.rowcount == 0:
+                            conn2.commit()
+                            cur2.execute(select_region,(region,))
                             if cur2.rowcount == 0:
                                 conn2.commit()
-                                cur2.execute(select_province,(province,))
+                                cur2.execute(select_country,(country,))
                                 if cur2.rowcount == 0:
                                     conn2.commit()
-                                    cur2.execute(select_region,(region,))
-                                    if cur2.rowcount == 0:
-                                        conn2.commit()
-                                        cur2.execute(select_country,(country,))
-                                        if cur2.rowcount == 0:
-                                            conn2.commit()
-                                            cur2.execute(add_country,(country,))
-                                            country_id  = cur2.lastrowid
-                                        else:
-                                            country_id = cur2.fetchone()[0]
-                                        conn2.commit()
-                                        cur2.execute(add_region,(region,country_id))
-                                        region_id  = cur2.lastrowid
-                                    else:
-                                        region_id, country_id = cur2.fetchone()
-                                    conn2.commit()
-                                    cur2.execute(add_province,(province,region_id,country_id))
-                                    province_id  = cur2.lastrowid
+                                    cur2.execute(add_country,(country,))
+                                    country_id  = cur2.lastrowid
                                 else:
-                                    province_id, region_id, country_id = cur2.fetchone()
+                                    country_id = cur2.fetchone()[0]
                                 conn2.commit()
-                                cur2.execute(add_municipality,(municipality,province_id,region_id,country_id))
-                                municipality_id  = cur2.lastrowid
+                                cur2.execute(add_region,(region,country_id))
+                                region_id  = cur2.lastrowid
                             else:
-                                municipality_id, province_id, region_id, country_id = cur2.fetchone()
+                                region_id, country_id = cur2.fetchone()
                             conn2.commit()
-                            
-                            cur2.execute(set_geo_extra,(cnt_id,municipality_id,province_id,region_id,country_id))
-                            conn2.commit()
-                            
-                        except Exception as err:
-                            logging.error("%s (%s)"%(str(err), sys.exc_info()[-1].tb_lineno))
-                            
-                        cur2.close()
-                        conn2.close()
+                            cur2.execute(add_province,(province,region_id,country_id))
+                            province_id  = cur2.lastrowid
+                        else:
+                            province_id, region_id, country_id = cur2.fetchone()
+                        conn2.commit()
+                        cur2.execute(add_municipality,(municipality,province_id,region_id,country_id))
+                        municipality_id  = cur2.lastrowid
+                    else:
+                        municipality_id, province_id, region_id, country_id = cur2.fetchone()
+                    conn2.commit()
+                    
+                    cur2.execute(set_geo_extra,(cnt_id,municipality_id,province_id,region_id,country_id))
+                    conn2.commit()
+                    
+                except Exception as err:
+                    logging.error("%s (%s)"%(str(err), sys.exc_info()[-1].tb_lineno))
+                    
+                cur2.close()
+                conn2.close()
                             
     except Exception as err:
         logging.error("%s (%s)"%(str(err), sys.exc_info()[-1].tb_lineno))
