@@ -85,7 +85,7 @@ class Memorize(object):
         Sets self.parent_file to the absolute path of the
         file containing the memoized function.
         """
-        rel_parent_file = inspect.stack()[-1].filename
+        rel_parent_file = inspect.stack()[-1][1]
         self.parent_filepath = os.path.abspath(rel_parent_file)
         self.parent_filename = _filename_from_path(rel_parent_file)
 
@@ -198,7 +198,7 @@ class BucketedMemorize(object):
         Sets self.parent_file to the absolute path of the
         file containing the memoized function.
         """
-        rel_parent_file = inspect.stack()[-1].filename
+        rel_parent_file = inspect.stack()[-1][1]
         self.parent_filepath = os.path.abspath(rel_parent_file)
         self.parent_filename = _filename_from_path(rel_parent_file)
 
