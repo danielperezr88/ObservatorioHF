@@ -20,6 +20,8 @@ import MySQLdb.connections as mysqlconn
 
 import observatoriohf
 
+from memorize import BucketedMemorize
+
 WDIR = '/var/www/html'
 PYDIR = 'searchs'
 PICKLEDIR = 'pickled_algos'
@@ -29,14 +31,6 @@ basename = os.path.basename(basepath)
 
 with open(os.path.join(WDIR,PYDIR,PICKLEDIR,'SpainMuniPaths.pkl'),'rb') as fp:
     data = pickle.load(fp)
-
-def memoize(f):
-  class memodict(dict):
-      __slots__ = ()
-      def __missing__(self, key):
-          self[key] = ret = f(key)
-          return ret
-  return memodict().__getitem__
 
 """
     maybeCreateDirs(<list|string>) -> <> (os)
@@ -61,7 +55,7 @@ def save_pid():
     except BaseException as e:
         logging.error('Failed to create pid file: '+ str(e))
 
-@memoize
+@BucketedMemorize
 def checkPaths(point):
     for municipality, province, region, country, pths in np.array(data):
         for p in pickle.loads(pths):
