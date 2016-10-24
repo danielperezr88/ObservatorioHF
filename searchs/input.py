@@ -309,7 +309,7 @@ def main():
         twitter_stream = Stream(auth, listener)
         twitter_stream.filter(track=kw_list,languages=['es'])
     except BaseException as e:
-        logging.error('Failed to execute twitter api: ' + str(e))    
+        logging.error('Failed to execute twitter api: %s (%s)\n'%(str(e), sys.exc_info()[-1].tb_lineno))    
     
     logging.info('Finished')
     

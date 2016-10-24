@@ -83,7 +83,7 @@ def replace(file_path, patterns):
                 for line in old_file:
                     changed = False
                     for pname, pline in [(k,"%s = %s\n"%(k,str([v[0] if len(v) == 1 else v])[1:-1])) for k, v in {k:v.replace("'","").split(',') for k, v in patterns.items()}.items()]:
-                        if line.strip().startswith(pname):
+                        if list(map(lambda x:x.strip(),line.split('=')))[0] == pname:
                             changed = True
                             new_file.write(pline.replace("'","\""))
                     if not changed:
@@ -101,30 +101,30 @@ def create_py_files(searchId, searchValues, dirname):
     if not os.path.exists(destpyfile):
         shutil.copy(os.path.join(dirname, "input.py"), destpyfile)
     configpyfile = os.path.join(dirname, "configinput" + searchId + ".py")
-#    if not os.path.exists(configpyfile):
-    shutil.copy(os.path.join(dirname, "configinput.py"), configpyfile)
-    
-    conf = {
-        0 : "keyword_list_filter",
-        2 : "consumer_key",
-        3 : "consumer_secret",
-        5 : "access_secret",
-        4 : "access_token"
-    }
-    
-    conf = {x:searchValues[idt] for idt, x in conf.items()}
-    
-    import observatoriohf    
-    
-    conf.update({
-        'sid' : searchId,
-        'dbuser' : observatoriohf.dbuser,
-        'dbhost' : observatoriohf.dbhost,
-        'db' : observatoriohf.dbdatabase,
-        'dbpwd' : observatoriohf.dbpassword
-    })
-    
-    replace(configpyfile,conf)
+    if not os.path.exists(configpyfile):
+        shutil.copy(os.path.join(dirname, "configinput.py"), configpyfile)
+        
+        conf = {
+            0 : "keyword_list_filter",
+            2 : "consumer_key",
+            3 : "consumer_secret",
+            5 : "access_secret",
+            4 : "access_token"
+        }
+        
+        conf = {x:searchValues[idt] for idt, x in conf.items()}
+        
+        import observatoriohf    
+        
+        conf.update({
+            'sid' : searchId,
+            'dbuser' : observatoriohf.dbuser,
+            'dbhost' : observatoriohf.dbhost,
+            'db' : observatoriohf.dbdatabase,
+            'dbpwd' : observatoriohf.dbpassword
+        })
+        
+        replace(configpyfile,conf)
 
 def launch_py(searchId, searchValues, pythonPath, dirname):
     create_py_files(searchId, searchValues, dirname) # just in case
