@@ -46,20 +46,7 @@ fp.close()
 
 import apikeys
 
-
-"""                                 DECORATORS                              """
-
-"""
-    @memoize(<function>) (unicodedata)
-        Handles function input/output caching.
-"""
-def memoize(f):
-  class memodict(dict):
-      __slots__ = ()
-      def __missing__(self, key):
-          self[key] = ret = f(key)
-          return ret
-  return memodict().__getitem__
+from memorize import BucketedMemorize
 
 """                                 UTILITIES                               """
 
@@ -227,7 +214,7 @@ def retrieveClassAndConfidence(classifier,feats=list()):
     #return result, int(probs[1]*255)-128
     return int(probs[1]*255)-128, 1
     
-@memoize
+@BucketedMemorize
 def GetGoogleLocation(location):
     ''' Try it at lesast 3 times before desist '''
     for attempt in range(3):
@@ -264,7 +251,7 @@ def analizeTweets(classifier, word_features):
     
     db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
     
-    fetch_unclassified = "select cnt_id, geolat, geolon from cnt_extra_" + db_date_suffix + " where polarity = 0 limit 10000"
+    fetch_unclassified = "select t1.cnt_id, t1.geolat, t1.geolon from cnt_extra_" + db_date_suffix + " as t1 join cnt_whats_inferred_" + db_date_suffix + " as t2 on t1.cnt_id = t2.cnt_id where t1.polarity = 0 and t2.polarity = 0 limit 10000"
     fetch_content = "select content from cnt_scraped_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_original = "select original_lat, original_lon, original_location from cnt_interactions_" + db_date_suffix + " where cnt_id = %s limit 1"
     fetch_location = "select location from cnt_info_" + db_date_suffix + " where cnt_id = %s limit 1"
