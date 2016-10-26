@@ -235,7 +235,10 @@ class BucketedMemorize(object):
         Takes cache file from cache bucket.
         """
         self.blob.download_to_filename(self.cache_filename)
-        self.read_cache()
+        with open(self.cache_filename, 'rb') as f:
+            data = pickle.loads(f.read())
+            self.timestamp = data['timestamp']
+            self.cache = data['cache']
 
     def bucket_cache(self):
         """
