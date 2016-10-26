@@ -224,15 +224,15 @@ def GetGoogleLocation(location):
             jsonDecoded = json.loads(r.content.decode("utf-8") )
             if (len(jsonDecoded["results"]) > 0):
                 geoLoc = jsonDecoded["results"][0]["geometry"]["location"]
-                return geoLoc["lat"], geoLoc["lng"]
+                return ((geoLoc["lat"], geoLoc["lng"]),True)
             else:
-                return 0, 0
+                return ((0, 0),jsonDecoded["status"] != "OVER_QUERY_LIMIT")
         except Exception as e:
             print("Error GetGoogleLocation: %s" % str(e))
             logging.error("Error GeoLocalize: %s" % str(e))
             sleep(1)
     
-    return 0, 0
+    return ((0, 0),False)
 
 def GeoLocalize(location):
         

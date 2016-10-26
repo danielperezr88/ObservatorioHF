@@ -184,14 +184,15 @@ class BucketedMemorize(object):
 
     def __call__(self, *args):
         if not isinstance(args, collections.Hashable):
-            return self.func(*args)
+            return self.func(*args)[0]
         if args in self.cache:
             return self.cache[args]
         else:
             value = self.func(*args)
-            self.cache[args] = value
-            self.bucket_cache()
-            return value
+            if value[1]:
+                self.cache[args] = value[0]
+                self.bucket_cache()
+            return value[0]
 
     def set_parent_file(self):
         """

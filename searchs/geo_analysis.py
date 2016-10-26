@@ -57,11 +57,14 @@ def save_pid():
 
 @BucketedMemorize
 def checkPaths(point):
-    for municipality, province, region, country, pths in np.array(data):
-        for p in pickle.loads(pths):
-            if p.contains_point(point):
-                return (municipality, province, region, country)
-    return None
+    try:
+        for municipality, province, region, country, pths in np.array(data):
+            for p in pickle.loads(pths):
+                if p.contains_point(point):
+                    return ((municipality, province, region, country),True)
+        return (None,True)
+    except Exception as e:
+        return (None,False)
 
 def analyzeTweets(db_date_suffix, limit, offset):
     
