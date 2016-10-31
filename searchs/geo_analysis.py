@@ -66,10 +66,11 @@ def checkPaths(point):
     except Exception as e:
         return (None,False)
 
-def analyzeTweets(db_date_suffix, limit, offset):
+def analyzeTweets(db_date_suffix, limit, lw_id_lim):
     
     records_found = False
     last_reached = False
+    last_id = 0
     
     anadir_tabla_geo_extra = ("""CREATE TABLE IF NOT EXISTS `geo_extra_%s` (
         `cnt_id` INT UNSIGNED NOT NULL,
@@ -112,7 +113,7 @@ def analyzeTweets(db_date_suffix, limit, offset):
     
     fetch_unclassified = """SELECT t1.cnt_id, t1.geoLat, t1.geoLon
         FROM cnt_extra_%s AS t1 LEFT JOIN geo_extra_%s AS t2 ON t1.cnt_id = t2.cnt_id
-        WHERE t2.cnt_id IS NULL AND t1.geoLat <>  0 LIMIT %s OFFSET %s"""%(db_date_suffix,db_date_suffix,limit,offset)
+        WHERE t2.cnt_id IS NULL AND t1.geoLat <>  0 AND t1.cnt_id > %s LIMIT %s"""%(db_date_suffix,db_date_suffix,lw_id_lim,limit)
 	
     add_country = """INSERT INTO countries (name) VALUES (%s)"""
     add_region = """INSERT INTO regions (name,country_id) VALUES (%s,%s)"""
@@ -152,6 +153,7 @@ def analyzeTweets(db_date_suffix, limit, offset):
             last_reached = True
         
         for cnt_id, lat, lon in [tuple(row) for row in cur]:
+            last_id = cnt_id
             res = checkPaths((lat,lon))
             if res is not None:
                 
@@ -213,7 +215,7 @@ def analyzeTweets(db_date_suffix, limit, offset):
     cur.close()
     conn.close()
     
-    return last_reached and not records_found
+    return last_reached and not records_found, last_id
 
 
 def main():
@@ -232,16 +234,18 @@ def main():
     """Infinite looop."""
     db_date_suffix = parser.datetime.datetime.now().strftime("%Y_%m")
     limit = 100
-    offset = 0
+    lw_id_lim = 0
     while True:
         
         aux = parser.datetime.datetime.now().strftime("%Y_%m")
         if(db_date_suffix != aux): #changed month
             db_date_suffix = aux
-            offset = 0
-            
-        if(analyzeTweets(db_date_suffix,limit,offset)): #whether we should update offset or not
-            offset += limit
+            lw_id_lim = 0
+
+        update_lim, last = analyzeTweets(db_date_suffix,limit,lw_id_lim)
+        
+        if(update_lim): #whether we should update lower id limit or not
+            lw_id_lim = last
             
         sleep(0.05) # delays for 0.25 seconds
     
