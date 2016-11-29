@@ -15,10 +15,10 @@ RUN curl -fSL "https://github.com/danielperezr88/ObservatorioHF/archive/v1.7.11.
 	cp /var/www/html/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 	
 # Download Unix Python Cron
-RUN curl -fSL "https://github.com/danielperezr88/unixpythonservicelauncher/archive/v0.0.4.tar.gz" -o upservlaunch.tar.gz && \
+RUN curl -fSL "https://github.com/danielperezr88/unixpythonservicelauncher/archive/v0.0.5.tar.gz" -o upservlaunch.tar.gz && \
 	tar -xf upservlaunch.tar.gz -C . && \
 	mkdir UnixPythonServiceLauncher && \
-	mv unixpythonservicelauncher-0.0.4/* UnixPythonServiceLauncher/ && \
+	mv unixpythonservicelauncher-0.0.5/* UnixPythonServiceLauncher/ && \
 	rm upservlaunch.tar.gz && \
 	chmod -R 755 UnixPythonServiceLauncher
 
